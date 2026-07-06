@@ -1,0 +1,113 @@
+name: benchmarkoor-v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      clients:
+        description: "JSON array of execution clients to benchmark"
+        required: false
+        default: '["besu", "erigon", "geth", "nethermind", "reth", "ethrex"]'
+      instance-id:
+        description: "Set this if you have multiple configurations for the same client but just want to run one of them"
+        required: false
+        default: ""
+      snapshot:
+        description: "Snapshot path "
+        required: false
+        type: choice
+        options:
+          - "state-actor/v1"
+      context:
+        description: "Test context"
+        required: false
+        type: choice
+        options:
+          - "repricing"
+        default: "repricing"
+      subdir:
+        description: "Subdirectory"
+        required: true
+        type: choice
+        options:
+          - "v1/bal-devnet-7"
+      test-type:
+        description: "Test type to run"
+        required: false
+        type: choice
+        options:
+          - "stateful"
+          - "compute"
+        default: "stateful"
+
+      run-timeout-minutes:
+        description: "Timeout for the benchmark run (minutes)"
+        required: false
+        default: "240"
+      image:
+        description: "Benchmarkoor docker image"
+        required: false
+        default: "ghcr.io/ethpandaops/benchmarkoor:master"
+      git-ref:
+        description: "Git reference to checkout for benchmarkoor"
+        required: false
+        default: ""
+      run-config:
+        description: 'Raw YAML config content to pass via --config (appended after URL config)'
+        required: false
+        default: ''
+
+jobs:
+  benchmarkoor:
+    strategy:
+      fail-fast: false
+      matrix:
+        client: ${{ fromJSON(inputs.clients) }}
+    runs-on:
+      group: gasbenchmark
+      labels:
+        - benchmarkoor-runner-${{ matrix.client }}
+    timeout-minutes: ${{ fromJSON(inputs.run-timeout-minutes) }}
+    steps:
+      - name: "Infos: Client=${{ matrix.client }} | Snapshot=${{ inputs.snapshot }} | TestType=${{ inputs.test-type }} | Context=${{ inputs.context }} | Subdirectory=${{ inputs.subdir }}"
+        run: |
+          echo "client: ${{ matrix.client }}"
+          echo "snapshot: ${{ inputs.snapshot }}"
+          echo "test-type: ${{ inputs.test-type }}"
+          echo "subdir: ${{ inputs.subdir }}"
+          echo "run-timeout-minutes: ${{ inputs.run-timeout-minutes }}"
+          echo "image: ${{ inputs.image }}"
+          echo "git-ref: ${{ inputs.git-ref }}"
+
+      - uses: actions/checkout@v4
+
+      - name: Calculate runner timeout
+        id: calc
+        run: |
+          echo "runner_timeout=$(( ${{ inputs.run-timeout-minutes }} - 30 ))m" >> "$GITHUB_OUTPUT"
+
+      - uses: ethpandaops/benchmarkoor@master
+        env:
+          S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          API_INGEST_TOKEN: ${{ secrets.API_INGEST_TOKEN }}
+          BENCHMARKOOR_RUNNER_RUN_TIMEOUT: ${{ steps.calc.outputs.runner_timeout }}
+        with:
+          mode: run
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ inputs.image }}
+          git-ref: ${{ inputs.git-ref }}
+          upload-artifacts: "false"
+          run-config-urls: >-
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/resource-limits-eip-7870-fullnode.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/s3-upload.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/runner.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/global.yaml
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/test-source.${{ inputs.test-type }}.runner.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/clients.yaml
+          run-args: >-
+            --limit-instance-client=${{ matrix.client }}
+            --limit-instance-id=${{ inputs.instance-id }}
+          run-config: ${{ inputs.run-config }}

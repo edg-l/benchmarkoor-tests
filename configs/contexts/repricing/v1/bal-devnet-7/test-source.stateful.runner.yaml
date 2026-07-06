@@ -1,0 +1,20 @@
+runner:
+  benchmark:
+    tests:
+      metadata:
+        labels:
+          name: state-actor-v1-amsterdam-stateful
+          chain: jochemnet
+          block: "0"
+          test-type: stateful
+          context: repricing
+          fork: amsterdam
+          data-disk-type: schelk
+      source:
+        eest_fixtures:
+          local_fixtures_dir: ${EEST_FIXTURES_DIR}/${EEST_FIXTURES_RUNNER_SOURCE}
+          fixtures_subdir: blockchain_tests_stateful_engine
+  container_runtime: podman
+  client:
+    config:
+      rollback_strategy: container-recreate
