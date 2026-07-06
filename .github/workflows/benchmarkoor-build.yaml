@@ -101,4 +101,6 @@ jobs:
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/test-source.${{ inputs.test-type }}.builder.yaml,
           build-args: >-
             --rebuild-on-diff
+            --limit-state-actor-target=${{ matrix.client }}
+            --limit-eest-payload-target=${{ matrix.client }}
           build-config: ${{ inputs.build-config }}
