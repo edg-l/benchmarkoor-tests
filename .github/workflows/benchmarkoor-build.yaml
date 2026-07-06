@@ -38,11 +38,10 @@ on:
           - "stateful"
           - "compute"
         default: "stateful"
-
       build-timeout-minutes:
         description: "Timeout for the benchmark build (minutes)"
         required: false
-        default: "240"
+        default: "500"
       image:
         description: "Benchmarkoor docker image"
         required: false
