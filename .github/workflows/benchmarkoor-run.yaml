@@ -1,4 +1,4 @@
-name: benchmarkoor-v2
+name: benchmarkoor-run
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
         required: false
         default: ""
       snapshot:
-        description: "Snapshot path "
+        description: "Snapshot path"
         required: false
         type: choice
         options:
@@ -39,10 +39,10 @@ on:
           - "compute"
         default: "stateful"
 
-      run-timeout-minutes:
-        description: "Timeout for the benchmark run (minutes)"
+      timeouts:
+        description: 'Per-phase timeouts (minutes) as JSON — build: state-actor build step, run: benchmark run step, global: whole-job cap'
         required: false
-        default: "240"
+        default: '{"build": 360, "run": 480, "global": 840}'
       image:
         description: "Benchmarkoor docker image"
         required: false
@@ -66,7 +66,9 @@ jobs:
       group: gasbenchmark
       labels:
         - benchmarkoor-runner-${{ matrix.client }}
-    timeout-minutes: ${{ fromJSON(inputs.run-timeout-minutes) }}
+    # Whole-job cap; each phase also has its own step-level timeout below
+    # (both read from the timeouts JSON input). Keep global >= build + run.
+    timeout-minutes: ${{ fromJSON(inputs.timeouts).global }}
     steps:
       - name: "Infos: Client=${{ matrix.client }} | Snapshot=${{ inputs.snapshot }} | TestType=${{ inputs.test-type }} | Context=${{ inputs.context }} | Subdirectory=${{ inputs.subdir }}"
         run: |
@@ -74,18 +76,42 @@ jobs:
           echo "snapshot: ${{ inputs.snapshot }}"
           echo "test-type: ${{ inputs.test-type }}"
           echo "subdir: ${{ inputs.subdir }}"
-          echo "run-timeout-minutes: ${{ inputs.run-timeout-minutes }}"
+          echo "timeouts: ${{ inputs.timeouts }}"
           echo "image: ${{ inputs.image }}"
           echo "git-ref: ${{ inputs.git-ref }}"
 
       - uses: actions/checkout@v4
 
-      - name: Calculate runner timeout
+      - name: Calculate timeouts
         id: calc
         run: |
-          echo "runner_timeout=$(( ${{ inputs.run-timeout-minutes }} - 30 ))m" >> "$GITHUB_OUTPUT"
+          # benchmarkoor's internal run timeout, 30m under each phase's step timeout.
+          echo "builder_timeout=$(( ${{ fromJSON(inputs.timeouts).build }} - 30 ))m" >> "$GITHUB_OUTPUT"
+          echo "runner_timeout=$(( ${{ fromJSON(inputs.timeouts).run }} - 30 ))m" >> "$GITHUB_OUTPUT"
 
-      - uses: ethpandaops/benchmarkoor@master
+      - name: Build state-actor data directory
+        timeout-minutes: ${{ fromJSON(inputs.timeouts).build }}
+        uses: ethpandaops/benchmarkoor@master
+        env:
+          BENCHMARKOOR_BUILDER_RUN_TIMEOUT: ${{ steps.calc.outputs.builder_timeout }}
+        with:
+          mode: build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ inputs.image }}
+          git-ref: ${{ inputs.git-ref }}
+          upload-artifacts: "false"
+          build-config-urls: >-
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/builder.yaml,
+          build-args: >-
+            --rebuild-on-diff
+            --limit-state-actor-target=${{ matrix.client }}
+
+
+      - name: Run benchmarkoor
+        timeout-minutes: ${{ fromJSON(inputs.timeouts).run }}
+        uses: ethpandaops/benchmarkoor@master
         env:
           S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -104,7 +130,7 @@ jobs:
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/s3-upload.yaml,
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/runner.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/global.yaml
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/global.yaml,
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/test-source.${{ inputs.test-type }}.runner.yaml,
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/clients.yaml
           run-args: >-
