@@ -84,7 +84,8 @@ jobs:
         run: |
           echo "builder_timeout=$(( ${{ inputs.build-timeout-minutes }} - 30 ))m" >> "$GITHUB_OUTPUT"
 
-      - uses: ethpandaops/benchmarkoor@master
+      - name: Build
+        uses: ethpandaops/benchmarkoor@master
         env:
           BENCHMARKOOR_BUILDER_RUN_TIMEOUT: ${{ steps.calc.outputs.builder_timeout }}
         with:

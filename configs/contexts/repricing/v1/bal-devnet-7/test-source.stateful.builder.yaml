@@ -7,7 +7,7 @@ builder:
       fork: amsterdam
       # Hardhat/Anvil dev key #0 → 0xf39Fd6…2266 (the pre-funded seed above).
       rpc_seed_key: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-      gas_benchmark_values: [30]
+      gas_benchmark_values: [200,300]
       datadir_method: schelk
       tests:
         - tests/benchmark/stateful/bloatnet

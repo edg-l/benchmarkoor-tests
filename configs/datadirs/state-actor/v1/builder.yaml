@@ -10,11 +10,11 @@ builder:
       erigon: ghcr.io/ethereum/state-actor-erigon:main
     pull_policy: always
     config:
-      seed: 42                  # gist uses --seed=42 (reproducible addresses)
-      fork: osaka               # snapshot baseline (amsterdam is forked in at fill/run)
+      seed: 42
+      fork: osaka
       chain: 1337
       gas_limit: 1000000000 # 1TGas
-      target_size: 10GB # Need to increase to at least 200GB. We're just using a lower value for quicker iterations on testing
+      target_size: 200GB
     spec:
       entities:
         # Pre-funded seed for fill-stateful — Hardhat/Anvil dev key #0
