@@ -231,7 +231,7 @@ jobs:
             sha=$(awk -v f="$base" '$2==f {print $1}' SHA256SUMS | head -1)
             parts=$({ grep -E "^${base}(\.part-[0-9]+)?$" assets.txt || true; } | jq -R . | jq -s .)
             build=$(jq '{
-                fork: (.state_actor.flags.fork // .eest_fill.fork),
+                snapshot_baseline_fork: .state_actor.flags.fork,
                 seed: .state_actor.flags.seed,
                 target_size: .state_actor.flags.target_size,
                 state_root: .state_actor.result.state_root,
@@ -303,6 +303,8 @@ jobs:
               a=$(jq -c --arg c "$client" '.assets[] | select(.client==$c)' manifest.json)
               echo
               echo "### $client"
+              echo
+              echo "#### state-actor"
               echo "| Field | Value |"
               echo "|---|---|"
               echo "| State root | \`$(val "$b" .state_root)\` |"
@@ -310,9 +312,17 @@ jobs:
               echo "| Contracts created | $(val "$b" .contracts_created) |"
               echo "| Storage slots | $(val "$b" .storage_slots) |"
               echo "| DB size | $(hbytes "$(jq -r '.db_size_bytes // empty' <<<"$b")") |"
-              echo "| state-actor image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
+              echo "| Seed | $(val "$b" .seed) |"
+              echo "| Target size | $(val "$b" .target_size) |"
+              echo "| Baseline fork | \`$(val "$b" .snapshot_baseline_fork)\` |"
+              echo "| Image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
+              echo
+              echo "#### eest tests / benchmarks"
+              echo "| Field | Value |"
+              echo "|---|---|"
               echo "| Filler | $(val "$b" .filler_client) (\`$(val "$b" .filler_image)\`) |"
               echo "| EEST commit | \`$(val "$b" .eest_sha)\` |"
+              echo "| Filter | $(val "$b" .filter) |"
               echo "| Fixtures filled / failed | $(val "$b" .fixtures_filled) / $(val "$b" .fixtures_failed) |"
               echo "| Fixtures size | $(hbytes "$(jq -r '.fixtures_size_bytes // empty' <<<"$b")") |"
               echo "| Asset | \`$(val "$a" .tarball)\` ($(jq -r '.files|length' <<<"$a") file(s)) |"
