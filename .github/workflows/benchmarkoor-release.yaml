@@ -45,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
+      title: ${{ steps.meta.outputs.title }}
       fork: ${{ steps.meta.outputs.fork }}
       eest_sha: ${{ steps.meta.outputs.eest_sha }}
       asset_base: ${{ steps.meta.outputs.asset_base }}
@@ -96,8 +97,13 @@ jobs:
           TAG='${{ inputs.tag }}'
           [ -n "$TAG" ] || TAG="eest-payloads-${SNAP_SLUG}-${FORK}-${EEST_SHA:0:8}"
 
+          # Date-prefixed title (build run's date = when the payloads were made,
+          # stable across release re-runs) so releases sort/scan cleanly.
+          BUILD_DATE=$(date -u -d "$(gh run view "$BUILD_RUN_ID" -R "$REPO" --json createdAt -q .createdAt)" +%Y.%m.%d)
+          TITLE="${BUILD_DATE} · EEST ${TT} payloads — ${SNAP} · ${FORK} · ${EEST_SHA:0:8}"
+
           {
-            echo "tag=$TAG"; echo "fork=$FORK"; echo "eest_sha=$EEST_SHA"
+            echo "tag=$TAG"; echo "title=$TITLE"; echo "fork=$FORK"; echo "eest_sha=$EEST_SHA"
             echo "asset_base=$ASSET_BASE"; echo "snapshot=$SNAP"; echo "context=$CTX"
             echo "subdir=$SUBDIR"; echo "test_type=$TT"; echo "clients=$CLIENTS"
           } >> "$GITHUB_OUTPUT"
@@ -110,7 +116,7 @@ jobs:
           TAG='${{ steps.meta.outputs.tag }}'
           if ! gh release view "$TAG" -R "${{ github.repository }}" >/dev/null 2>&1; then
             gh release create "$TAG" -R "${{ github.repository }}" --draft \
-              --title "EEST ${{ steps.meta.outputs.test_type }} payloads — ${{ steps.meta.outputs.snapshot }} · ${{ steps.meta.outputs.fork }} · ${{ steps.meta.outputs.eest_sha }}" \
+              --title "${{ steps.meta.outputs.title }}" \
               --notes "Publishing… assets are uploading."
           fi
 
@@ -193,6 +199,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.prepare-release.outputs.tag }}
+          TITLE: ${{ needs.prepare-release.outputs.title }}
           REPO: ${{ github.repository }}
           FORK: ${{ needs.prepare-release.outputs.fork }}
           EEST_SHA: ${{ needs.prepare-release.outputs.eest_sha }}
@@ -329,7 +336,7 @@ jobs:
               echo "| SHA256 | \`$(val "$a" .sha256)\` |"
             done
           } > notes.md
-          gh release edit "$TAG" -R "$REPO" --notes-file notes.md
+          gh release edit "$TAG" -R "$REPO" --title "$TITLE" --notes-file notes.md
 
           if [ '${{ inputs.draft }}' != 'true' ]; then
             gh release edit "$TAG" -R "$REPO" --draft=false
