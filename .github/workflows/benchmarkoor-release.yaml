@@ -157,12 +157,20 @@ jobs:
           # extracted before any split, for the finalize job's notes + manifest.
           mkdir meta
           tar -xzf "$ASSET" -C meta --wildcards \
-            '*/state-actor-manifest.json' '*/.benchmarkoor-fill.json' 2>/dev/null || true
+            '*/state-actor-manifest.json' '*/.benchmarkoor-fill.json' \
+            '*/.benchmarkoor-build.json' '*/.benchmarkoor-pytest-report.json' 2>/dev/null || true
           SA=$(find meta -name state-actor-manifest.json | head -1)
           FILL=$(find meta -name .benchmarkoor-fill.json | head -1)
+          BUILD=$(find meta -path '*eest-payloads*' -name .benchmarkoor-build.json | head -1)
+          PYTEST=$(find meta -name .benchmarkoor-pytest-report.json | head -1)
           jq -n --arg client "$CLIENT" \
             --slurpfile sa "${SA:-/dev/null}" --slurpfile fill "${FILL:-/dev/null}" \
-            '{client:$client, state_actor:($sa[0] // {}), eest_fill:($fill[0] // {})}' \
+            --slurpfile build "${BUILD:-/dev/null}" --slurpfile pytest "${PYTEST:-/dev/null}" \
+            '{client:$client,
+              state_actor:($sa[0] // {}),
+              eest_fill:($fill[0] // {}),
+              build_inputs:(($build[0] // {}).inputs // {}),
+              pytest:(($pytest[0] // {}) | {summary, duration, exitcode, created})}' \
             > "${CLIENT}.meta.json"
 
           UPLOADS=("$ASSET.sha256")
@@ -230,7 +238,7 @@ jobs:
             --arg tag "$TAG" --arg snapshot "$SNAPSHOT" --arg context "$CONTEXT" \
             --arg subdir "$SUBDIR" --arg test_type "$TEST_TYPE" --arg fork "$FORK" \
             --arg eest_sha "$EEST_SHA" \
-            '{schema_version:2, tag:$tag, snapshot:$snapshot, context:$context,
+            '{schema_version:3, tag:$tag, snapshot:$snapshot, context:$context,
               subdir:$subdir, test_type:$test_type, fork:$fork, eest_sha:$eest_sha,
               assets:[]}')
           for client in $(echo "$CLIENTS" | jq -r '.[]'); do
@@ -240,21 +248,37 @@ jobs:
             build=$(jq '{
                 snapshot_baseline_fork: .state_actor.flags.fork,
                 seed: .state_actor.flags.seed,
+                chain_id: .state_actor.flags.chain_id,
+                gas_limit: .state_actor.flags.gas_limit,
                 target_size: .state_actor.flags.target_size,
                 state_root: .state_actor.result.state_root,
                 accounts_created: .state_actor.result.accounts_created,
                 contracts_created: .state_actor.result.contracts_created,
                 storage_slots: .state_actor.result.storage_slots,
                 db_size_bytes: .state_actor.result.total_db_size_bytes,
+                state_actor_elapsed_ms: .state_actor.result.elapsed_ms,
+                generated_at: .state_actor.generated_at,
+                state_actor_version: .state_actor.state_actor.version,
+                state_actor_vcs_revision: .state_actor.state_actor.vcs_revision,
                 state_actor_image: .state_actor.benchmarkoor.image,
                 state_actor_image_digest: .state_actor.benchmarkoor.image_digest,
                 filler_client: .eest_fill.filler_client,
                 filler_image: .eest_fill.filler_image,
                 eest_sha: .eest_fill.eest_sha,
+                eest_repo: .build_inputs.eest_repo,
                 filter: .eest_fill.filter,
                 fixtures_filled: .eest_fill.filled,
                 fixtures_failed: .eest_fill.failed,
-                fixtures_size_bytes: .eest_fill.size_bytes
+                fixtures_size_bytes: .eest_fill.size_bytes,
+                gas_benchmark_values: .build_inputs.gas_benchmark_values,
+                max_gas_per_test: .build_inputs.max_gas_per_test,
+                fixed_opcode_count: .build_inputs.fixed_opcode_count,
+                marker: .build_inputs.marker,
+                tests: .build_inputs.tests,
+                genesis_eips: (.build_inputs.genesis_eip_override.EIPs // .build_inputs.genesis_eip_override.eips),
+                pytest_passed: .pytest.summary.passed,
+                pytest_total: .pytest.summary.total,
+                fill_duration_s: .pytest.duration
               }' "$META_DIR/${client}.meta.json" 2>/dev/null || echo '{}')
             MANIFEST=$(echo "$MANIFEST" | jq \
               --arg client "$client" --arg base "$base" --arg sha "$sha" \
@@ -290,6 +314,9 @@ jobs:
           # build summary, sourced from the manifest/fill data in each artifact).
           hbytes() { [ -n "${1:-}" ] && [ "$1" != "null" ] && numfmt --to=iec --suffix=B "$1" 2>/dev/null || echo "—"; }
           val() { local v; v=$(jq -r "$2 // empty" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
+          arr() { local v; v=$(jq -r "($2 // []) | map(tostring) | join(\", \")" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
+          dur() { local s; s=$(jq -r "$2 // empty" <<<"$1"); [ -n "$s" ] && date -u -d "@${s%.*}" +%H:%M:%S 2>/dev/null || echo "—"; }
+          durms() { local ms; ms=$(jq -r "$2 // empty" <<<"$1"); [ -n "$ms" ] && date -u -d "@$((ms/1000))" +%H:%M:%S 2>/dev/null || echo "—"; }
           {
             echo "## EEST $TEST_TYPE payloads"
             echo
@@ -319,9 +346,14 @@ jobs:
               echo "| Contracts created | $(val "$b" .contracts_created) |"
               echo "| Storage slots | $(val "$b" .storage_slots) |"
               echo "| DB size | $(hbytes "$(jq -r '.db_size_bytes // empty' <<<"$b")") |"
+              echo "| Chain ID | $(val "$b" .chain_id) |"
+              echo "| Block gas limit | $(val "$b" .gas_limit) |"
               echo "| Seed | $(val "$b" .seed) |"
               echo "| Target size | $(val "$b" .target_size) |"
               echo "| Baseline fork | \`$(val "$b" .snapshot_baseline_fork)\` |"
+              echo "| Build time | $(durms "$b" .state_actor_elapsed_ms) |"
+              echo "| Generated at | $(val "$b" .generated_at) |"
+              echo "| state-actor version | \`$(val "$b" .state_actor_version)\` |"
               echo "| Image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
               echo
               echo "#### eest tests / benchmarks"
@@ -329,8 +361,16 @@ jobs:
               echo "|---|---|"
               echo "| Filler | $(val "$b" .filler_client) (\`$(val "$b" .filler_image)\`) |"
               echo "| EEST commit | \`$(val "$b" .eest_sha)\` |"
+              echo "| Tests | $(arr "$b" .tests) |"
+              echo "| Marker | $(val "$b" .marker) |"
+              echo "| Gas benchmark values | $(arr "$b" .gas_benchmark_values) |"
+              echo "| Activated EIPs | $(arr "$b" .genesis_eips) |"
+              echo "| Max gas per test | $(val "$b" .max_gas_per_test) |"
+              echo "| Fixed opcode count | $(val "$b" .fixed_opcode_count) |"
               echo "| Filter | $(val "$b" .filter) |"
               echo "| Fixtures filled / failed | $(val "$b" .fixtures_filled) / $(val "$b" .fixtures_failed) |"
+              echo "| Pytest passed / total | $(val "$b" .pytest_passed) / $(val "$b" .pytest_total) |"
+              echo "| Fill duration | $(dur "$b" .fill_duration_s) |"
               echo "| Fixtures size | $(hbytes "$(jq -r '.fixtures_size_bytes // empty' <<<"$b")") |"
               echo "| Asset | \`$(val "$a" .tarball)\` ($(jq -r '.files|length' <<<"$a") file(s)) |"
               echo "| SHA256 | \`$(val "$a" .sha256)\` |"
