@@ -1,0 +1,254 @@
+name: benchmarkoor-release
+
+# Promotes eest payloads from an existing benchmarkoor-build run into a GitHub
+# Release. It does NOT rebuild. Everything except the build run ID is derived:
+#   - clients            → from the build run's per-client artifacts
+#   - snapshot/context/
+#     subdir/test-type   → parsed from the build run's run-name (displayTitle)
+#   - fork/eest_sha      → from the .benchmarkoor-build.json sidecar in the artifact
+# Each client's artifact (benchmarkoor-build-<run_id>-<client>) is repackaged as
+# a release asset, split into parts if it exceeds GitHub's 2 GB asset cap, and
+# published with a manifest + checksums + download helper.
+
+on:
+  workflow_dispatch:
+    inputs:
+      build-run-id:
+        description: "benchmarkoor-build run ID to promote payloads from"
+        required: true
+      tag:
+        description: "Release tag (empty = auto: eest-payloads-<snapshot>-<fork>-<eest-sha8>)"
+        required: false
+        default: ""
+      draft:
+        description: "Keep the release as a draft for manual review"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  # GitHub caps each release asset at 2 GB; split anything larger into parts.
+  MAX_ASSET_BYTES: "2000000000"
+  SPLIT_SIZE: "1900M"
+
+jobs:
+  # Derive clients + context + lineage from the build run, then open a draft
+  # release once so the parallel publish legs don't race to create it.
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      fork: ${{ steps.meta.outputs.fork }}
+      eest_sha: ${{ steps.meta.outputs.eest_sha }}
+      asset_base: ${{ steps.meta.outputs.asset_base }}
+      snapshot: ${{ steps.meta.outputs.snapshot }}
+      context: ${{ steps.meta.outputs.context }}
+      subdir: ${{ steps.meta.outputs.subdir }}
+      test_type: ${{ steps.meta.outputs.test_type }}
+      clients: ${{ steps.meta.outputs.clients }}
+    steps:
+      - name: Derive clients, context and lineage from the build run
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BUILD_RUN_ID: ${{ inputs.build-run-id }}
+        run: |
+          set -euo pipefail
+          PREFIX="benchmarkoor-build-${BUILD_RUN_ID}-"
+
+          # Context from the build run's run-name (see benchmarkoor-build.yaml).
+          DT=$(gh run view "$BUILD_RUN_ID" -R "$REPO" --json displayTitle -q .displayTitle)
+          field() { grep -oE "$1=[^ ]+" <<<"$DT" | head -1 | cut -d= -f2-; }
+          SNAP=$(field snapshot); CTX=$(field context)
+          SUBDIR=$(field subdir); TT=$(field test-type)
+          if [ -z "$SNAP" ] || [ -z "$TT" ]; then
+            echo "::error::Could not parse context from run $BUILD_RUN_ID (run-name: '$DT'). Was it built with a benchmarkoor-build that sets run-name?"
+            exit 1
+          fi
+
+          # Clients from the per-client build artifacts.
+          CLIENTS=$(gh api "/repos/$REPO/actions/runs/$BUILD_RUN_ID/artifacts" --paginate \
+            --jq '.artifacts[].name' \
+            | { grep -E "^${PREFIX}" || true; } | sed "s/^${PREFIX}//" | sort -u | jq -R . | jq -sc .)
+          if [ "$CLIENTS" = "[]" ]; then
+            echo "::error::No artifacts named ${PREFIX}<client> on run $BUILD_RUN_ID. Did the build run with upload-build-artifacts + per-client build-artifact-name?"
+            exit 1
+          fi
+
+          # fork + eest_sha from the first client's sidecar.
+          FIRST=$(echo "$CLIENTS" | jq -r '.[0]')
+          gh run download "$BUILD_RUN_ID" -n "${PREFIX}${FIRST}" -R "$REPO" -D artifact
+          tar -xzf artifact/benchmarkoor-build-artifacts.tar.gz -C artifact
+          SIDECAR="artifact/benchmarkoor-build-artifacts/eest-payloads/${FIRST}/.benchmarkoor-build.json"
+          FORK=$(jq -r '.inputs.fork' "$SIDECAR")
+          EEST_SHA=$(jq -r '.inputs.eest_sha' "$SIDECAR")
+
+          SNAP_SLUG=${SNAP//\//-}
+          ASSET_BASE="eest-payloads-${SNAP_SLUG}-${FORK}-${TT}"
+          TAG='${{ inputs.tag }}'
+          [ -n "$TAG" ] || TAG="eest-payloads-${SNAP_SLUG}-${FORK}-${EEST_SHA:0:8}"
+
+          {
+            echo "tag=$TAG"; echo "fork=$FORK"; echo "eest_sha=$EEST_SHA"
+            echo "asset_base=$ASSET_BASE"; echo "snapshot=$SNAP"; echo "context=$CTX"
+            echo "subdir=$SUBDIR"; echo "test_type=$TT"; echo "clients=$CLIENTS"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release (idempotent)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG='${{ steps.meta.outputs.tag }}'
+          if ! gh release view "$TAG" -R "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release create "$TAG" -R "${{ github.repository }}" --draft \
+              --title "EEST ${{ steps.meta.outputs.test_type }} payloads — ${{ steps.meta.outputs.snapshot }} · ${{ steps.meta.outputs.fork }} · ${{ steps.meta.outputs.eest_sha }}" \
+              --notes "Publishing… assets are uploading."
+          fi
+
+  # One asset (or set of parts) per client, uploaded to the shared draft release.
+  publish:
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        client: ${{ fromJSON(needs.prepare-release.outputs.clients) }}
+    steps:
+      - name: Download build artifact for ${{ matrix.client }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh run download "${{ inputs.build-run-id }}" \
+            -n "benchmarkoor-build-${{ inputs.build-run-id }}-${{ matrix.client }}" \
+            -R "${{ github.repository }}" -D dl
+          mv dl/benchmarkoor-build-artifacts.tar.gz \
+            "${{ needs.prepare-release.outputs.asset_base }}-${{ matrix.client }}.tar.gz"
+
+      - name: Checksum, split if >2 GB, upload
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG='${{ needs.prepare-release.outputs.tag }}'
+          ASSET="${{ needs.prepare-release.outputs.asset_base }}-${{ matrix.client }}.tar.gz"
+          SIZE=$(stat -c%s "$ASSET")
+          # .sha256 always refers to the whole (reassembled) tarball.
+          sha256sum "$ASSET" > "$ASSET.sha256"
+          UPLOADS=("$ASSET.sha256")
+          if [ "$SIZE" -gt "$MAX_ASSET_BYTES" ]; then
+            echo "::notice::$ASSET is $SIZE bytes (> 2 GB) — splitting into $SPLIT_SIZE parts"
+            split -b "$SPLIT_SIZE" -d -a 3 "$ASSET" "$ASSET.part-"
+            rm -f "$ASSET"
+            for p in "$ASSET".part-*; do UPLOADS+=("$p"); done
+          else
+            UPLOADS+=("$ASSET")
+          fi
+          gh release upload "$TAG" -R "${{ github.repository }}" --clobber "${UPLOADS[@]}"
+
+  # Aggregate manifest + checksums + download helper, render notes, publish.
+  finalize:
+    needs: [prepare-release, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assemble manifest, checksums, helper, notes and publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare-release.outputs.tag }}
+          REPO: ${{ github.repository }}
+          FORK: ${{ needs.prepare-release.outputs.fork }}
+          EEST_SHA: ${{ needs.prepare-release.outputs.eest_sha }}
+          ASSET_BASE: ${{ needs.prepare-release.outputs.asset_base }}
+          CLIENTS: ${{ needs.prepare-release.outputs.clients }}
+          SNAPSHOT: ${{ needs.prepare-release.outputs.snapshot }}
+          CONTEXT: ${{ needs.prepare-release.outputs.context }}
+          SUBDIR: ${{ needs.prepare-release.outputs.subdir }}
+          TEST_TYPE: ${{ needs.prepare-release.outputs.test_type }}
+          BUILD_RUN_ID: ${{ inputs.build-run-id }}
+        run: |
+          set -euo pipefail
+          mkdir rel && cd rel
+
+          # Per-asset checksums the publish legs uploaded → SHA256SUMS.
+          gh release download "$TAG" -R "$REPO" -p '*.sha256' -D shas
+          cat shas/*.sha256 > SHA256SUMS
+
+          # Assets currently on the release (minus the files we generate here).
+          gh release view "$TAG" -R "$REPO" \
+            --json assets -q '.assets[].name' \
+            | grep -vE '^(SHA256SUMS|manifest\.json|download\.sh)$' > assets.txt || true
+
+          # manifest.json: one entry per client, listing its file(s).
+          MANIFEST=$(jq -n \
+            --arg tag "$TAG" --arg snapshot "$SNAPSHOT" --arg context "$CONTEXT" \
+            --arg subdir "$SUBDIR" --arg test_type "$TEST_TYPE" --arg fork "$FORK" \
+            --arg eest_sha "$EEST_SHA" \
+            '{schema_version:1, tag:$tag, snapshot:$snapshot, context:$context,
+              subdir:$subdir, test_type:$test_type, fork:$fork, eest_sha:$eest_sha,
+              assets:[]}')
+          for client in $(echo "$CLIENTS" | jq -r '.[]'); do
+            base="${ASSET_BASE}-${client}.tar.gz"
+            sha=$(awk -v f="$base" '$2==f {print $1}' SHA256SUMS | head -1)
+            parts=$({ grep -E "^${base}(\.part-[0-9]+)?$" assets.txt || true; } | jq -R . | jq -s .)
+            MANIFEST=$(echo "$MANIFEST" | jq \
+              --arg client "$client" --arg base "$base" --arg sha "$sha" --argjson parts "$parts" \
+              '.assets += [{client:$client, tarball:$base, sha256:$sha, files:$parts}]')
+          done
+          echo "$MANIFEST" > manifest.json
+
+          # download.sh — fetch (+ reassemble parts) + verify + untar, per client.
+          cat > download.sh <<EOF
+          #!/usr/bin/env bash
+          # Download & verify eest payloads for release: $TAG
+          set -euo pipefail
+          BASE="https://github.com/$REPO/releases/download/$TAG"
+          curl -fsSL "\$BASE/manifest.json" -o manifest.json
+          jq -r '.assets[].files[]' manifest.json | while read -r f; do
+            echo "↓ \$f"; curl -fsSL "\$BASE/\$f" -o "\$f"
+          done
+          for t in \$(jq -r '.assets[].tarball' manifest.json); do
+            if [ ! -f "\$t" ] && ls "\$t".part-* >/dev/null 2>&1; then
+              cat "\$t".part-* > "\$t"; rm -f "\$t".part-*
+            fi
+          done
+          curl -fsSL "\$BASE/SHA256SUMS" -o SHA256SUMS
+          sha256sum -c SHA256SUMS
+          echo "OK — tarballs verified. Extract with: tar xzf <file>.tar.gz"
+          EOF
+          chmod +x download.sh
+
+          gh release upload "$TAG" -R "$REPO" --clobber SHA256SUMS manifest.json download.sh
+
+          # Notes.
+          {
+            echo "## EEST $TEST_TYPE payloads"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Snapshot | \`$SNAPSHOT\` |"
+            echo "| Fork | \`$FORK\` |"
+            echo "| Context / subdir | \`$CONTEXT\` / \`$SUBDIR\` |"
+            echo "| EEST commit | \`$EEST_SHA\` |"
+            echo "| Promoted from build run | [\`$BUILD_RUN_ID\`](https://github.com/$REPO/actions/runs/$BUILD_RUN_ID) |"
+            echo
+            echo "Each \`*.tar.gz\` contains \`eest-payloads/<client>/…\` fixtures and \`state-actor/<client>/state-actor-manifest.json\`."
+            echo "Assets over 2 GB are split into \`.part-NNN\` files — use \`download.sh\` (fetches, reassembles, verifies against \`SHA256SUMS\`), or see \`manifest.json\`."
+            echo
+            echo "### Assets"
+            echo "| Client | Files | SHA256 (tarball) |"
+            echo "|---|---|---|"
+            for client in $(echo "$CLIENTS" | jq -r '.[]'); do
+              jq -r --arg c "$client" '.assets[] | select(.client==$c) | "| \($c) | \(.files|length) file(s) | `\(.sha256)` |"' manifest.json
+            done
+          } > notes.md
+          gh release edit "$TAG" -R "$REPO" --notes-file notes.md
+
+          if [ '${{ inputs.draft }}' != 'true' ]; then
+            gh release edit "$TAG" -R "$REPO" --draft=false
+          fi

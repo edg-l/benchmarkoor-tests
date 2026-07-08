@@ -1,5 +1,11 @@
 name: benchmarkoor-build
 
+# Embed the dispatch context in the run title so benchmarkoor-release.yaml can
+# recover snapshot/context/subdir/test-type from just the build run ID (GitHub's
+# API doesn't expose workflow_dispatch inputs). Values are space-free, so the
+# release workflow parses them with `grep -oE 'key=[^ ]+'`.
+run-name: "benchmarkoor-build · snapshot=${{ inputs.snapshot }} · context=${{ inputs.context }} · subdir=${{ inputs.subdir }} · test-type=${{ inputs.test-type }}"
+
 on:
   workflow_dispatch:
     inputs:
@@ -94,6 +100,10 @@ jobs:
           image: ${{ inputs.image }}
           git-ref: ${{ inputs.git-ref }}
           upload-artifacts: "false"
+          # Upload each client's eest fixtures + state-actor manifest as a
+          # per-client artifact so benchmarkoor-release.yaml can promote them.
+          upload-build-artifacts: "true"
+          build-artifact-name: benchmarkoor-build-${{ github.run_id }}-${{ matrix.client }}
           build-config-urls: >-
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/global.yaml,
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
