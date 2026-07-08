@@ -256,8 +256,6 @@ jobs:
                 contracts_created: .state_actor.result.contracts_created,
                 storage_slots: .state_actor.result.storage_slots,
                 db_size_bytes: .state_actor.result.total_db_size_bytes,
-                state_actor_elapsed_ms: .state_actor.result.elapsed_ms,
-                generated_at: .state_actor.generated_at,
                 state_actor_version: .state_actor.state_actor.version,
                 state_actor_vcs_revision: .state_actor.state_actor.vcs_revision,
                 state_actor_image: .state_actor.benchmarkoor.image,
@@ -277,8 +275,7 @@ jobs:
                 tests: .build_inputs.tests,
                 genesis_eips: (.build_inputs.genesis_eip_override.EIPs // .build_inputs.genesis_eip_override.eips),
                 pytest_passed: .pytest.summary.passed,
-                pytest_total: .pytest.summary.total,
-                fill_duration_s: .pytest.duration
+                pytest_total: .pytest.summary.total
               }' "$META_DIR/${client}.meta.json" 2>/dev/null || echo '{}')
             MANIFEST=$(echo "$MANIFEST" | jq \
               --arg client "$client" --arg base "$base" --arg sha "$sha" \
@@ -315,8 +312,6 @@ jobs:
           hbytes() { [ -n "${1:-}" ] && [ "$1" != "null" ] && numfmt --to=iec --suffix=B "$1" 2>/dev/null || echo "—"; }
           val() { local v; v=$(jq -r "$2 // empty" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
           arr() { local v; v=$(jq -r "($2 // []) | map(tostring) | join(\", \")" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
-          dur() { local s; s=$(jq -r "$2 // empty" <<<"$1"); [ -n "$s" ] && date -u -d "@${s%.*}" +%H:%M:%S 2>/dev/null || echo "—"; }
-          durms() { local ms; ms=$(jq -r "$2 // empty" <<<"$1"); [ -n "$ms" ] && date -u -d "@$((ms/1000))" +%H:%M:%S 2>/dev/null || echo "—"; }
           {
             echo "## EEST $TEST_TYPE payloads"
             echo
@@ -351,8 +346,6 @@ jobs:
               echo "| Seed | $(val "$b" .seed) |"
               echo "| Target size | $(val "$b" .target_size) |"
               echo "| Baseline fork | \`$(val "$b" .snapshot_baseline_fork)\` |"
-              echo "| Build time | $(durms "$b" .state_actor_elapsed_ms) |"
-              echo "| Generated at | $(val "$b" .generated_at) |"
               echo "| state-actor version | \`$(val "$b" .state_actor_version)\` |"
               echo "| Image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
               echo
@@ -370,7 +363,6 @@ jobs:
               echo "| Filter | $(val "$b" .filter) |"
               echo "| Fixtures filled / failed | $(val "$b" .fixtures_filled) / $(val "$b" .fixtures_failed) |"
               echo "| Pytest passed / total | $(val "$b" .pytest_passed) / $(val "$b" .pytest_total) |"
-              echo "| Fill duration | $(dur "$b" .fill_duration_s) |"
               echo "| Fixtures size | $(hbytes "$(jq -r '.fixtures_size_bytes // empty' <<<"$b")") |"
               echo "| Asset | \`$(val "$a" .tarball)\` ($(jq -r '.files|length' <<<"$a") file(s)) |"
               echo "| SHA256 | \`$(val "$a" .sha256)\` |"
