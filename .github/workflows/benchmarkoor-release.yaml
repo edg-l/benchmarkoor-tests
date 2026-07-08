@@ -5,7 +5,10 @@ name: benchmarkoor-release
 #   - clients            → from the build run's per-client artifacts
 #   - snapshot/context/
 #     subdir/test-type   → parsed from the build run's run-name (displayTitle)
-#   - fork/eest_sha      → from the .benchmarkoor-build.json sidecar in the artifact
+#   - fork/eest_sha and
+#     the full per-client build details (state root, DB size, fixtures counts,
+#     images, …) → from the state-actor-manifest.json + .benchmarkoor-fill.json
+#     that ship inside each artifact (same data as benchmarkoor's build summary).
 # Each client's artifact (benchmarkoor-build-<run_id>-<client>) is repackaged as
 # a release asset, split into parts if it exceeds GitHub's 2 GB asset cap, and
 # published with a manifest + checksums + download helper.
@@ -112,6 +115,7 @@ jobs:
           fi
 
   # One asset (or set of parts) per client, uploaded to the shared draft release.
+  # Also extracts the per-target build metadata for the finalize job's notes.
   publish:
     needs: prepare-release
     runs-on: ubuntu-latest
@@ -131,16 +135,30 @@ jobs:
           mv dl/benchmarkoor-build-artifacts.tar.gz \
             "${{ needs.prepare-release.outputs.asset_base }}-${{ matrix.client }}.tar.gz"
 
-      - name: Checksum, split if >2 GB, upload
+      - name: Extract build metadata, checksum, split if >2 GB, upload
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLIENT: ${{ matrix.client }}
         run: |
           set -euo pipefail
           TAG='${{ needs.prepare-release.outputs.tag }}'
-          ASSET="${{ needs.prepare-release.outputs.asset_base }}-${{ matrix.client }}.tar.gz"
+          ASSET="${{ needs.prepare-release.outputs.asset_base }}-${CLIENT}.tar.gz"
           SIZE=$(stat -c%s "$ASSET")
           # .sha256 always refers to the whole (reassembled) tarball.
           sha256sum "$ASSET" > "$ASSET.sha256"
+
+          # Per-target build data (same source as benchmarkoor's build summary),
+          # extracted before any split, for the finalize job's notes + manifest.
+          mkdir meta
+          tar -xzf "$ASSET" -C meta --wildcards \
+            '*/state-actor-manifest.json' '*/.benchmarkoor-fill.json' 2>/dev/null || true
+          SA=$(find meta -name state-actor-manifest.json | head -1)
+          FILL=$(find meta -name .benchmarkoor-fill.json | head -1)
+          jq -n --arg client "$CLIENT" \
+            --slurpfile sa "${SA:-/dev/null}" --slurpfile fill "${FILL:-/dev/null}" \
+            '{client:$client, state_actor:($sa[0] // {}), eest_fill:($fill[0] // {})}' \
+            > "${CLIENT}.meta.json"
+
           UPLOADS=("$ASSET.sha256")
           if [ "$SIZE" -gt "$MAX_ASSET_BYTES" ]; then
             echo "::notice::$ASSET is $SIZE bytes (> 2 GB) — splitting into $SPLIT_SIZE parts"
@@ -152,11 +170,25 @@ jobs:
           fi
           gh release upload "$TAG" -R "${{ github.repository }}" --clobber "${UPLOADS[@]}"
 
-  # Aggregate manifest + checksums + download helper, render notes, publish.
+      - name: Hand build metadata to finalize
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-meta-${{ matrix.client }}
+          path: ${{ matrix.client }}.meta.json
+          if-no-files-found: error
+
+  # Aggregate manifest + checksums + download helper, render rich notes, publish.
   finalize:
     needs: [prepare-release, publish]
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch per-client build metadata
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-meta-*
+          merge-multiple: true
+          path: meta
+
       - name: Assemble manifest, checksums, helper, notes and publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -173,6 +205,7 @@ jobs:
           BUILD_RUN_ID: ${{ inputs.build-run-id }}
         run: |
           set -euo pipefail
+          META_DIR="$PWD/meta"
           mkdir rel && cd rel
 
           # Per-asset checksums the publish legs uploaded → SHA256SUMS.
@@ -184,21 +217,42 @@ jobs:
             --json assets -q '.assets[].name' \
             | grep -vE '^(SHA256SUMS|manifest\.json|download\.sh)$' > assets.txt || true
 
-          # manifest.json: one entry per client, listing its file(s).
+          # manifest.json: one entry per client, with a build{} block distilled
+          # from that client's state-actor manifest + eest fill sidecar.
           MANIFEST=$(jq -n \
             --arg tag "$TAG" --arg snapshot "$SNAPSHOT" --arg context "$CONTEXT" \
             --arg subdir "$SUBDIR" --arg test_type "$TEST_TYPE" --arg fork "$FORK" \
             --arg eest_sha "$EEST_SHA" \
-            '{schema_version:1, tag:$tag, snapshot:$snapshot, context:$context,
+            '{schema_version:2, tag:$tag, snapshot:$snapshot, context:$context,
               subdir:$subdir, test_type:$test_type, fork:$fork, eest_sha:$eest_sha,
               assets:[]}')
           for client in $(echo "$CLIENTS" | jq -r '.[]'); do
             base="${ASSET_BASE}-${client}.tar.gz"
             sha=$(awk -v f="$base" '$2==f {print $1}' SHA256SUMS | head -1)
             parts=$({ grep -E "^${base}(\.part-[0-9]+)?$" assets.txt || true; } | jq -R . | jq -s .)
+            build=$(jq '{
+                fork: (.state_actor.flags.fork // .eest_fill.fork),
+                seed: .state_actor.flags.seed,
+                target_size: .state_actor.flags.target_size,
+                state_root: .state_actor.result.state_root,
+                accounts_created: .state_actor.result.accounts_created,
+                contracts_created: .state_actor.result.contracts_created,
+                storage_slots: .state_actor.result.storage_slots,
+                db_size_bytes: .state_actor.result.total_db_size_bytes,
+                state_actor_image: .state_actor.benchmarkoor.image,
+                state_actor_image_digest: .state_actor.benchmarkoor.image_digest,
+                filler_client: .eest_fill.filler_client,
+                filler_image: .eest_fill.filler_image,
+                eest_sha: .eest_fill.eest_sha,
+                filter: .eest_fill.filter,
+                fixtures_filled: .eest_fill.filled,
+                fixtures_failed: .eest_fill.failed,
+                fixtures_size_bytes: .eest_fill.size_bytes
+              }' "$META_DIR/${client}.meta.json" 2>/dev/null || echo '{}')
             MANIFEST=$(echo "$MANIFEST" | jq \
-              --arg client "$client" --arg base "$base" --arg sha "$sha" --argjson parts "$parts" \
-              '.assets += [{client:$client, tarball:$base, sha256:$sha, files:$parts}]')
+              --arg client "$client" --arg base "$base" --arg sha "$sha" \
+              --argjson parts "$parts" --argjson build "$build" \
+              '.assets += [{client:$client, tarball:$base, sha256:$sha, files:$parts, build:$build}]')
           done
           echo "$MANIFEST" > manifest.json
 
@@ -225,7 +279,10 @@ jobs:
 
           gh release upload "$TAG" -R "$REPO" --clobber SHA256SUMS manifest.json download.sh
 
-          # Notes.
+          # Notes: header + per-client build details (mirrors benchmarkoor's
+          # build summary, sourced from the manifest/fill data in each artifact).
+          hbytes() { [ -n "${1:-}" ] && [ "$1" != "null" ] && numfmt --to=iec --suffix=B "$1" 2>/dev/null || echo "—"; }
+          val() { local v; v=$(jq -r "$2 // empty" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
           {
             echo "## EEST $TEST_TYPE payloads"
             echo
@@ -240,11 +297,26 @@ jobs:
             echo "Each \`*.tar.gz\` contains \`eest-payloads/<client>/…\` fixtures and \`state-actor/<client>/state-actor-manifest.json\`."
             echo "Assets over 2 GB are split into \`.part-NNN\` files — use \`download.sh\` (fetches, reassembles, verifies against \`SHA256SUMS\`), or see \`manifest.json\`."
             echo
-            echo "### Assets"
-            echo "| Client | Files | SHA256 (tarball) |"
-            echo "|---|---|---|"
+            echo "## Build details"
             for client in $(echo "$CLIENTS" | jq -r '.[]'); do
-              jq -r --arg c "$client" '.assets[] | select(.client==$c) | "| \($c) | \(.files|length) file(s) | `\(.sha256)` |"' manifest.json
+              b=$(jq -c --arg c "$client" '.assets[] | select(.client==$c) | .build' manifest.json)
+              a=$(jq -c --arg c "$client" '.assets[] | select(.client==$c)' manifest.json)
+              echo
+              echo "### $client"
+              echo "| Field | Value |"
+              echo "|---|---|"
+              echo "| State root | \`$(val "$b" .state_root)\` |"
+              echo "| Accounts created | $(val "$b" .accounts_created) |"
+              echo "| Contracts created | $(val "$b" .contracts_created) |"
+              echo "| Storage slots | $(val "$b" .storage_slots) |"
+              echo "| DB size | $(hbytes "$(jq -r '.db_size_bytes // empty' <<<"$b")") |"
+              echo "| state-actor image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
+              echo "| Filler | $(val "$b" .filler_client) (\`$(val "$b" .filler_image)\`) |"
+              echo "| EEST commit | \`$(val "$b" .eest_sha)\` |"
+              echo "| Fixtures filled / failed | $(val "$b" .fixtures_filled) / $(val "$b" .fixtures_failed) |"
+              echo "| Fixtures size | $(hbytes "$(jq -r '.fixtures_size_bytes // empty' <<<"$b")") |"
+              echo "| Asset | \`$(val "$a" .tarball)\` ($(jq -r '.files|length' <<<"$a") file(s)) |"
+              echo "| SHA256 | \`$(val "$a" .sha256)\` |"
             done
           } > notes.md
           gh release edit "$TAG" -R "$REPO" --notes-file notes.md
