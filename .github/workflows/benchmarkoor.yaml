@@ -86,7 +86,7 @@ jobs:
           echo "image: ${{ inputs.image }}"
           echo "git-ref: ${{ inputs.git-ref }}"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Calculate runner timeout
         id: calc

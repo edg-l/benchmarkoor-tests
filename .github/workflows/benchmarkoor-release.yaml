@@ -171,7 +171,7 @@ jobs:
           gh release upload "$TAG" -R "${{ github.repository }}" --clobber "${UPLOADS[@]}"
 
       - name: Hand build metadata to finalize
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-meta-${{ matrix.client }}
           path: ${{ matrix.client }}.meta.json
@@ -183,7 +183,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch per-client build metadata
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: release-meta-*
           merge-multiple: true
