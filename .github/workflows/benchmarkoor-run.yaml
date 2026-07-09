@@ -101,9 +101,9 @@ jobs:
           git-ref: ${{ inputs.git-ref }}
           upload-artifacts: "false"
           build-config-urls: >-
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/global.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/builder.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/datadirs/${{ inputs.snapshot }}/builder.yaml,
           build-args: >-
             --rebuild-on-diff
             --limit-state-actor-target=${{ matrix.client }}
@@ -125,14 +125,14 @@ jobs:
           git-ref: ${{ inputs.git-ref }}
           upload-artifacts: "false"
           run-config-urls: >-
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/global.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/resource-limits-eip-7870-fullnode.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/s3-upload.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/runner.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/global.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/test-source.${{ inputs.test-type }}.runner.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/clients.yaml
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/resource-limits-eip-7870-fullnode.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/s3-upload.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/datadirs/${{ inputs.snapshot }}/runner.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/test-source.${{ inputs.test-type }}.runner.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/clients.yaml
           run-args: >-
             --limit-instance-client=${{ matrix.client }}
             --limit-instance-id=${{ inputs.instance-id }}

@@ -105,11 +105,11 @@ jobs:
           upload-build-artifacts: "true"
           build-artifact-name: benchmarkoor-build-${{ github.run_id }}-${{ matrix.client }}
           build-config-urls: >-
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/global.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/datadirs/${{ inputs.snapshot }}/builder.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/global.yaml,
-            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/master/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/test-source.${{ inputs.test-type }}.builder.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/datadirs/${{ inputs.snapshot }}/builder.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/test-source.${{ inputs.test-type }}.builder.yaml,
           build-args: >-
             --rebuild-on-diff
             --limit-state-actor-target=${{ matrix.client }}
