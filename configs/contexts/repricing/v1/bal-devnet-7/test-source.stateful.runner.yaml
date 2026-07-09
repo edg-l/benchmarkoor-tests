@@ -13,7 +13,7 @@ runner:
       source:
         eest_fixtures:
           fixtures_url: https://github.com/ethpandaops/benchmarkoor-tests/releases/download/eest-payloads-state-actor-v1-amsterdam-9c423e9f/eest-payloads-state-actor-v1-amsterdam-stateful-nethermind.tar.gz
-          fixtures_subdir: eest-payloads/nethermind/blockchain_tests_stateful_engine
+          fixtures_subdir: benchmarkoor-build-artifacts/eest-payloads/nethermind/blockchain_tests_stateful_engine
   container_runtime: podman
   client:
     config:
