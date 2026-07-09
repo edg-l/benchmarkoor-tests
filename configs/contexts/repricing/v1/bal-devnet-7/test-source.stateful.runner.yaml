@@ -4,7 +4,6 @@ runner:
       metadata:
         labels:
           name: state-actor-v1-amsterdam-stateful
-          chain: jochemnet
           block: "0"
           test-type: stateful
           context: repricing
