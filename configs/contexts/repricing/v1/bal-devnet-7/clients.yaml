@@ -177,6 +177,7 @@ runner:
       image: nethermindeth/nethermind:master
       genesis_eip_override: { timestamp: 1, eips: [7708, 7778, 7843, 7928, 7954, 7976, 7981, 8024, 8037] }
       extra_args:
+        - --Init.BaseDbPath=/data
         - --FlatDb.Enabled=true
         - --FlatDb.CompactionOffset=0
         - --Blocks.ParallelExecution=true # Default is true, but set explicitly for clarity
@@ -190,6 +191,7 @@ runner:
       image: nethermindeth/nethermind:master
       genesis_eip_override: { timestamp: 1, eips: [7708, 7778, 7843, 7928, 7954, 7976, 7981, 8024, 8037] }
       extra_args:
+        - --Init.BaseDbPath=/data
         - --FlatDb.Enabled=true
         - --FlatDb.CompactionOffset=0
         - --Blocks.ParallelExecution=false
@@ -203,6 +205,7 @@ runner:
       image: nethermindeth/nethermind:master
       genesis_eip_override: { timestamp: 1, eips: [7708, 7778, 7843, 7928, 7954, 7976, 7981, 8024, 8037] }
       extra_args:
+        - --Init.BaseDbPath=/data
         - --FlatDb.Enabled=true
         - --FlatDb.CompactionOffset=0
         - --Blocks.ParallelExecution=true
