@@ -6,7 +6,8 @@ runner:
       metadata:
         labels:
           bal-mode: sequential
-      image: ethpandaops/geth:bal-devnet-7
+      #image: ethpandaops/geth:bal-devnet-7
+      image: ethpandaops/geth:skylenet-bal-devnet-7-with-amsterdam-override
       extra_args:
         - --override.amsterdam=1
         - --debug.logslowblock=0
@@ -20,7 +21,8 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/geth:bal-devnet-7
+      #image: ethpandaops/geth:bal-devnet-7
+      image: ethpandaops/geth:skylenet-bal-devnet-7-with-amsterdam-override
       extra_args:
         - --override.amsterdam=1
         - --debug.logslowblock=0
@@ -33,7 +35,8 @@ runner:
       metadata:
         labels:
           bal-mode: nobatchio
-      image: ethpandaops/geth:bal-devnet-7
+      #image: ethpandaops/geth:bal-devnet-7
+      image: ethpandaops/geth:skylenet-bal-devnet-7-with-amsterdam-override
       extra_args:
         - --override.amsterdam=1
         - --debug.logslowblock=0
