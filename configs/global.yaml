@@ -1,6 +1,9 @@
 global:
   log_level: info
 
+builder:
+  cleanup_on_start: true
+
 runner:
   client_logs_to_stdout: true
   docker_network: benchmarkoor
