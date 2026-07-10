@@ -21,6 +21,7 @@ builder:
     targets:
       # Nethermind
       - name: nethermind
+        force: true   # TODO: remove after one green build — forces an eest rebuild over the leftover partial fixtures (no fingerprint recorded); does NOT rebuild the state-actor datadir
         filler_client: nethermind
         filler_image: nethermindeth/nethermind@sha256:25528d2943397a21d2c9c86f3b36de72fb3738fc1baadf050d582c5d4465f625
         source_dir: ${STATE_DIR}/nethermind
