@@ -22,7 +22,7 @@ builder:
       # Nethermind
       - name: nethermind
         filler_client: nethermind
-        filler_image: nethermindeth/nethermind:master
+        filler_image: nethermindeth/nethermind@sha256:25528d2943397a21d2c9c86f3b36de72fb3738fc1baadf050d582c5d4465f625
         source_dir: ${STATE_DIR}/nethermind
         # nethermind reads a parity chainspec; amsterdam is activated via the
         # per-instance genesis_eip_override (same EIP set as the runner instance).
