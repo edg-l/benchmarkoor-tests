@@ -178,7 +178,8 @@ runner:
         labels:
           bal-mode: full
       #image: nethermindeth/nethermind:master
-      image: nethermindeth/nethermind@sha256:25528d2943397a21d2c9c86f3b36de72fb3738fc1baadf050d582c5d4465f625
+      #image: nethermindeth/nethermind@sha256:25528d2943397a21d2c9c86f3b36de72fb3738fc1baadf050d582c5d4465f625
+      image:  nethermindeth/nethermind:bal-devnet-7
       genesis_eip_override: { timestamp: 1, eips: [7708, 7778, 7843, 7928, 7954, 7976, 7981, 8024, 8037] }
       extra_args:
         - --Init.BaseDbPath=/data
@@ -193,7 +194,8 @@ runner:
         labels:
           bal-mode: sequential
       #image: nethermindeth/nethermind:master
-      image: nethermindeth/nethermind@sha256:25528d2943397a21d2c9c86f3b36de72fb3738fc1baadf050d582c5d4465f625
+      #image: nethermindeth/nethermind@sha256:25528d2943397a21d2c9c86f3b36de72fb3738fc1baadf050d582c5d4465f625
+      image:  nethermindeth/nethermind:bal-devnet-7
       genesis_eip_override: { timestamp: 1, eips: [7708, 7778, 7843, 7928, 7954, 7976, 7981, 8024, 8037] }
       extra_args:
         - --Init.BaseDbPath=/data
@@ -208,6 +210,8 @@ runner:
         labels:
           bal-mode: nobatchio
       #image: nethermindeth/nethermind:master
+      #image: nethermindeth/nethermind@sha256:25528d2943397a21d2c9c86f3b36de72fb3738fc1baadf050d582c5d4465f625
+      image:  nethermindeth/nethermind:bal-devnet-7
       genesis_eip_override: { timestamp: 1, eips: [7708, 7778, 7843, 7928, 7954, 7976, 7981, 8024, 8037] }
       extra_args:
         - --Init.BaseDbPath=/data
