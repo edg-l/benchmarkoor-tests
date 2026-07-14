@@ -236,7 +236,7 @@ runner:
         labels:
           bal-mode: full
       # image: ethpandaops/erigon:bal-devnet-7
-      image: ethpandaops/erigon@sha256:207bd1a91c5732377a1cd9e31ca01efeb1d2a8f5b42a2ca348c007e2e7fb6c6d
+      image: ethpandaops/erigon@sha256:65b3d278606f03e7c50a0a9c86acbe6031f0e540faa80bbc775d53f21499680d
       extra_args:
         - --override.amsterdam=1
         - --fcu.background.commit=false
@@ -255,7 +255,7 @@ runner:
         labels:
           bal-mode: sequential
       # image: ethpandaops/erigon:bal-devnet-7
-      image: ethpandaops/erigon@sha256:207bd1a91c5732377a1cd9e31ca01efeb1d2a8f5b42a2ca348c007e2e7fb6c6d
+      image: ethpandaops/erigon@sha256:65b3d278606f03e7c50a0a9c86acbe6031f0e540faa80bbc775d53f21499680d
       extra_args:
         - --override.amsterdam=1
         - --fcu.background.commit=false
@@ -276,7 +276,7 @@ runner:
         labels:
           bal-mode: nobatchio
       # image: ethpandaops/erigon:bal-devnet-7
-      image: ethpandaops/erigon@sha256:207bd1a91c5732377a1cd9e31ca01efeb1d2a8f5b42a2ca348c007e2e7fb6c6d
+      image: ethpandaops/erigon@sha256:65b3d278606f03e7c50a0a9c86acbe6031f0e540faa80bbc775d53f21499680d
       extra_args:
         - --override.amsterdam=1
         - --fcu.background.commit=false
