@@ -24,7 +24,7 @@ builder:
       - name: nethermind
         force: true   # TODO: remove after one green build — forces an eest rebuild over the leftover partial fixtures (no fingerprint recorded); does NOT rebuild the state-actor datadir
         filler_client: nethermind
-        filler_image: nethermindeth/nethermind:master
+        filler_image: ethpandaops/nethermind:glamsterdam-devnet-7
         source_dir: ${STATE_DIR}/nethermind
         filler_extra_args:
           - --FlatDb.Enabled=true
