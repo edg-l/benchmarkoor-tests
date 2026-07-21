@@ -14,7 +14,8 @@ builder:
       fork: osaka
       chain: 1337
       gas_limit: 1000000000 # 1TGas
-      target_size: 200GB
+      #target_size: 200GB
+      target_size: 1GB # Temporary, just to iterate quicker.
     spec:
       entities:
         # Pre-funded seed for fill-stateful — Hardhat/Anvil dev key #0
