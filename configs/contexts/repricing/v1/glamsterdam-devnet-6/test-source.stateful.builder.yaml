@@ -25,6 +25,12 @@ builder:
         filler_client: nethermind
         filler_image: nethermindeth/nethermind:glamsterdam-devnet-6
         source_dir: ${STATE_DIR}/nethermind
+        filler_extra_args:
+          - --FlatDb.Enabled=true
+          - --FlatDb.CompactionOffset=0
+          - --Init.AutoDump=None
+          - --Merge.NewPayloadBlockProcessingTimeout=70000
+          - --Blocks.CachePrecompilesOnBlockProcessing=false
         # nethermind reads a parity chainspec; amsterdam is activated via the
         # per-instance genesis_eip_override (same EIP set as the runner instance).
         genesis: ${STATE_DIR}/nethermind/parity-chainspec.json
