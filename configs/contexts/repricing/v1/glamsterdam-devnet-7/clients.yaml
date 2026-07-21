@@ -6,7 +6,7 @@ runner:
       metadata:
         labels:
           bal-mode: sequential
-      image: ethpandaops/geth:glamsterdam-devnet-6
+      image: ethpandaops/geth:glamsterdam-devnet-7
       extra_args:
         - --override.amsterdam=1
         - --debug.logslowblock=0
@@ -20,7 +20,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/geth:glamsterdam-devnet-6
+      image: ethpandaops/geth:glamsterdam-devnet-7
       extra_args:
         - --override.amsterdam=1
         - --debug.logslowblock=0
@@ -33,7 +33,7 @@ runner:
       metadata:
         labels:
           bal-mode: nobatchio
-      image: ethpandaops/geth:glamsterdam-devnet-6
+      image: ethpandaops/geth:glamsterdam-devnet-7
       extra_args:
         - --override.amsterdam=1
         - --debug.logslowblock=0
@@ -45,7 +45,7 @@ runner:
       metadata:
         labels:
           bal-mode: sequential
-      image: ethpandaops/besu:glamsterdam-devnet-6
+      image: ethpandaops/besu:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
       environment:
         BESU_OPTS: "-Xms8g -Xmx8g -XX:+AlwaysPreTouch"
@@ -61,7 +61,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/besu:glamsterdam-devnet-6
+      image: ethpandaops/besu:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
       environment:
         BESU_OPTS: "-Xms8g -Xmx8g -XX:+AlwaysPreTouch"
@@ -78,7 +78,7 @@ runner:
     # Same as besu-bal-full, but on the AOT-cache image: the JVM starts
     # pre-warmed (Project Leyden) so Besu isn't penalised for JIT/C2 warmup.
     # PoC image, built manually by baking a Besu-team-provided AOT cache into
-    # ethpandaops/besu:glamsterdam-devnet-6 (no recompile) and validated to load. This
+    # ethpandaops/besu:glamsterdam-devnet-7 (no recompile) and validated to load. This
     # is experimental and expected to be reverted once comparison numbers are in.
     # BESU_OPTS is a JVM env var, so it must go here, not in extra_args.
     - id: besu-bal-full-aot
@@ -87,7 +87,7 @@ runner:
         labels:
           bal-mode: full
           aot: "true"
-      image: ethpandaops/besu:glamsterdam-devnet-6-aot-poc
+      image: ethpandaops/besu:glamsterdam-devnet-7-aot-poc
       genesis_fork_override: { amsterdam: 1 }
       environment:
         BESU_OPTS: "-Xms8g -Xmx8g -XX:+AlwaysPreTouch -XX:AOTCache=/opt/besu/aot/besu.aot -Xlog:aot=info"
@@ -106,7 +106,7 @@ runner:
       metadata:
         labels:
           bal-mode: nobatchio
-      image: ethpandaops/besu:glamsterdam-devnet-6
+      image: ethpandaops/besu:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
       environment:
         BESU_OPTS: "-Xms8g -Xmx8g -XX:+AlwaysPreTouch"
@@ -126,7 +126,7 @@ runner:
       metadata:
         labels:
           bal-mode: sequential
-      image: ethpandaops/reth:glamsterdam-devnet-6
+      image: ethpandaops/reth:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
       extra_args:
         - --engine.slow-block-threshold=0
@@ -143,7 +143,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/reth:glamsterdam-devnet-6
+      image: ethpandaops/reth:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
       extra_args:
         - --engine.slow-block-threshold=0
@@ -157,7 +157,7 @@ runner:
       metadata:
         labels:
           bal-mode: nobatchio
-      image: ethpandaops/reth:glamsterdam-devnet-6
+      image: ethpandaops/reth:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
       extra_args:
         - --engine.slow-block-threshold=0
@@ -174,7 +174,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image:  nethermindeth/nethermind:glamsterdam-devnet-6
+      image:  nethermindeth/nethermind:master
       genesis_eip_override: { timestamp: 1, eips: [2780, 7708, 7778, 7843, 7928, 7954, 7976, 7981, 7997, 8024, 8037, 8038, 8246, 8282] }
       extra_args:
         - --Init.BaseDbPath=/data
@@ -188,7 +188,7 @@ runner:
       metadata:
         labels:
           bal-mode: sequential
-      image:  nethermindeth/nethermind:glamsterdam-devnet-6
+      image:  nethermindeth/nethermind:master
       genesis_eip_override: { timestamp: 1, eips: [2780, 7708, 7778, 7843, 7928, 7954, 7976, 7981, 7997, 8024, 8037, 8038, 8246, 8282] }
       extra_args:
         - --Init.BaseDbPath=/data
@@ -202,7 +202,7 @@ runner:
       metadata:
         labels:
           bal-mode: nobatchio
-      image:  nethermindeth/nethermind:glamsterdam-devnet-6
+      image:  nethermindeth/nethermind:master
       genesis_eip_override: { timestamp: 1, eips: [2780, 7708, 7778, 7843, 7928, 7954, 7976, 7981, 7997, 8024, 8037, 8038, 8246, 8282] }
       extra_args:
         - --Init.BaseDbPath=/data
@@ -226,7 +226,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/erigon:glamsterdam-devnet-6
+      image: ethpandaops/erigon:glamsterdam-devnet-7
       extra_args:
         - --override.amsterdam=1
         - --fcu.background.commit=false
@@ -244,7 +244,7 @@ runner:
       metadata:
         labels:
           bal-mode: sequential
-      image: ethpandaops/erigon:glamsterdam-devnet-6
+      image: ethpandaops/erigon:glamsterdam-devnet-7
       extra_args:
         - --override.amsterdam=1
         - --fcu.background.commit=false
@@ -264,7 +264,7 @@ runner:
       metadata:
         labels:
           bal-mode: nobatchio
-      image: ethpandaops/erigon:glamsterdam-devnet-6
+      image: ethpandaops/erigon:glamsterdam-devnet-7
       extra_args:
         - --override.amsterdam=1
         - --fcu.background.commit=false
@@ -285,7 +285,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/ethrex:glamsterdam-devnet-6
+      image: ethpandaops/ethrex:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
       extra_args:
         - --no-precompile-cache
@@ -297,5 +297,5 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/nimbus-eth1:glamsterdam-devnet-6
+      image: ethpandaops/nimbus-eth1:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
