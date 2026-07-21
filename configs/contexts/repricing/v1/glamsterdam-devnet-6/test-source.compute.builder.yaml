@@ -37,3 +37,27 @@ builder:
         genesis: ${STATE_DIR}/nethermind/parity-chainspec.json
         genesis_eip_override: { timestamp: 1, eips: [2780, 7708, 7778, 7843, 7928, 7954, 7976, 7981, 7997, 8024, 8037, 8038, 8246, 8282] }
         output_dir: ${EEST_FIXTURES_DIR}/nethermind
+
+      # Geth
+      - name: geth
+        force: true   # TODO: remove after one green build — forces an eest rebuild over the leftover partial fixtures (no fingerprint recorded); does NOT rebuild the state-actor datadir
+        filler_client: geth
+        filler_image: ethpandaops/geth:glamsterdam-devnet-6
+        source_dir: ${STATE_DIR}/geth
+        # geth boots from the snapshot datadir; activate amsterdam at block 0's
+        # timestamp (0) + 1 via the override flag — same as the runner geth instance.
+        filler_extra_args:
+          - --override.amsterdam=1
+        output_dir: ${EEST_FIXTURES_DIR}/geth
+
+      # Besu
+      - name: besu
+        force: true   # TODO: remove after one green build — forces an eest rebuild over the leftover partial fixtures (no fingerprint recorded); does NOT rebuild the state-actor datadir
+        filler_client: besu
+        filler_image: ethpandaops/besu:glamsterdam-devnet-6
+        source_dir: ${STATE_DIR}/besu
+        # besu reads forks from the geth-format genesis; benchmarkoor patches
+        # amsterdamTime in at boot (snapshot block 0 ts is 0, so amsterdam at ts 1).
+        genesis: ${STATE_DIR}/besu/besu-chainspec.json
+        genesis_fork_override: { amsterdam: 1 }
+        output_dir: ${EEST_FIXTURES_DIR}/besu
