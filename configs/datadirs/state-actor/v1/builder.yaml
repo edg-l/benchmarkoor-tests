@@ -47,14 +47,34 @@ builder:
           name: create2-factory
           template: create2_factory
           address: 0x4e59b44847b379578588920cA78FbF26c0B4956C
-        # 150000 CREATE2 contracts with UNIQUE 24KB runtime (cold-contract access
-        # / test_transaction_types). ~3.7 GB resident code during build.
+        # CREATE2 receivers, one entity per AccountMode initcode. The minimal
+        # initcode 0x60016000f3 (PUSH1 1, PUSH1 0, RETURN) deploys the 1-byte
+        # STOP runtime — byte-identical to EEST's MinimalContractInitcode.
         - kind: contract
-          name: create2-deploys-300m
+          name: create2-minimal-300m
+          template: create2_deploys
+          parameters:
+            initcode: "0x60016000f3"
+            runtime: "0x00"
+            salt_count: 100000 # 100K
+        - kind: contract
+          name: create2-same-300m
+          template: create2_deploys
+          parameters:
+            code_pattern: max_same_pre_amsterdam
+            salt_count: 100000 # 100K
+        - kind: contract
+          name: create2-diff-300m
+          template: create2_deploys
+          parameters:
+            code_pattern: max_diff_pre_amsterdam
+            salt_count: 100000 # 100K
+        - kind: contract
+          name: create2-jumpdest-300m
           template: create2_deploys
           parameters:
             code_pattern: unique_jumpdest_pre_amsterdam
-            salt_count: 150000
+            salt_count: 100000 # 100K
         # Sender pool for test_ether_transfers_onchain_receivers, which derives
         # senders as EOA(key=SENDER_BASE_KEY + i) and assumes them pre-funded.
         # SENDER_BASE_KEY = keccak256("gas-repricings-private-key") on this EEST
@@ -78,9 +98,20 @@ builder:
             runtime: "0x606060405236156100495763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416636ea056a98114610052578063c0ee0b8a14610092575b6100505b5b565b005b341561005a57fe5b61007e73ffffffffffffffffffffffffffffffffffffffff60043516602435610104565b604080519115158252519081900360200190f35b341561009a57fe5b604080516020600460443581810135601f810184900484028501840190955284845261005094823573ffffffffffffffffffffffffffffffffffffffff169460248035956064949293919092019181908401838280828437509496506101ef95505050505050565b005b6000805460408051602090810184905281517f3c18d31800000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff878116600483015292519290931692633c18d318926024808301939282900301818787803b151561017b57fe5b6102c65a03f1151561018957fe5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff1660003660006040516020015260405180838380828437820191505092505050602060405180830381856102c65a03f415156101e057fe5b50506040515190505b92915050565b5b5050505600a165627a7a723058204cdd69fdcf3cf6cbee9677fe380fa5f044048aa9e060ec5619a21ca5a5bd4cd10029"
             storage_init:
               "0x0": "0xa3c1e324ca1ce40db73ed6026c4a177f099b5770"
+        # EIP-7702 delegations: authority i (key=DELEGATE_BASE_KEY + i, where
+        # DELEGATE_BASE_KEY = keccak256("gas-repricings-7702-delegate"))
+        # delegates to the max_diff receiver i (EXISTING_CONTRACT_DIFF_MAX).
+        - kind: contract
+          name: delegations-300m
+          template: sequential_pkey_delegations
+          parameters:
+            start_pkey: "0x959a83d905ff1fab43bf72c3e87020e4c77fd4bde0e5eeb48e5edbf74a9ec64e"
+            code_pattern: max_diff_pre_amsterdam
+            count: 100000 # 100K
+            balance: "1000000000000000000"
         # EIP-8282 builder-execution-request predeploys (system-called at end of
         # every block since amsterdam). Strict clients (besu/nethermind/ethrex)
-        # reject a block if these have no code; predeploy the devnet-6 bytecode so
+        # reject a block if these have no code; predeploy the bytecode so
         # the end-of-block system call returns empty requests (queue empty).
         - kind: contract
           name: eip8282-builder-deposit-requests-glamsterdam-devnet-6
