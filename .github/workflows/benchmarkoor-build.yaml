@@ -71,7 +71,7 @@ jobs:
     runs-on:
       group: gasbenchmark
       labels:
-        - benchmarkoor-builder-${{ matrix.client }}
+        - benchmarkoor-v1-runner--${{ matrix.client }}
     timeout-minutes: ${{ fromJSON(inputs.build-timeout-minutes) }}
     steps:
       - name: "Infos: Client=${{ matrix.client }} | Snapshot=${{ inputs.snapshot }} | TestType=${{ inputs.test-type }} | Context=${{ inputs.context }} | Subdirectory=${{ inputs.subdir }}"
