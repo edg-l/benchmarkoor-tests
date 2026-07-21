@@ -1,0 +1,63 @@
+builder:
+  eest_payloads:
+    pull_policy: always
+    eest_repo: https://github.com/ethereum/execution-specs.git
+    eest_ref: devnets/glamsterdam/6-benchmarks
+    config:
+      fork: amsterdam
+      # Hardhat/Anvil dev key #0 → 0xf39Fd6…2266 (the pre-funded seed above).
+      rpc_seed_key: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+      gas_benchmark_values: [30]
+      datadir_method: schelk
+      tests:
+        - tests/benchmark/stateful/bloatnet
+      # Resolves @pytest.mark.stub_parametrize prefixes against pre-deployed
+      # state (e.g. bloated_eoa_10GB → 0x87a6…be04).
+      address_stubs:
+        bloated_eoa_10GB:
+          addr: "0x87a6314da5ac8832f6e7a176c8fb133b19f5be04"
+          pkey: "0x4da32d29f6dcffa26e09dc4e102033f2d105de1444fb893493ae703289275e0e"
+      marker: repricing
+      extract_opcode_count: true
+    targets:
+      # Nethermind
+      - name: nethermind
+        force: true   # TODO: remove after one green build — forces an eest rebuild over the leftover partial fixtures (no fingerprint recorded); does NOT rebuild the state-actor datadir
+        filler_client: nethermind
+        filler_image: nethermindeth/nethermind:glamsterdam-devnet-7
+        source_dir: ${STATE_DIR}/nethermind
+        filler_extra_args:
+          - --FlatDb.Enabled=true
+          - --FlatDb.CompactionOffset=0
+          - --Init.AutoDump=None
+          - --Merge.NewPayloadBlockProcessingTimeout=70000
+          - --Blocks.CachePrecompilesOnBlockProcessing=false
+        # nethermind reads a parity chainspec; amsterdam is activated via the
+        # per-instance genesis_eip_override (same EIP set as the runner instance).
+        genesis: ${STATE_DIR}/nethermind/parity-chainspec.json
+        genesis_eip_override: { timestamp: 1, eips: [2780, 7708, 7778, 7843, 7928, 7954, 7976, 7981, 7997, 8024, 8037, 8038, 8246, 8282] }
+        output_dir: ${EEST_FIXTURES_DIR}/nethermind
+
+      # Geth
+      - name: geth
+        force: true   # TODO: remove after one green build — forces an eest rebuild over the leftover partial fixtures (no fingerprint recorded); does NOT rebuild the state-actor datadir
+        filler_client: geth
+        filler_image: ethpandaops/geth:glamsterdam-devnet-7
+        source_dir: ${STATE_DIR}/geth
+        # geth boots from the snapshot datadir; activate amsterdam at block 0's
+        # timestamp (0) + 1 via the override flag — same as the runner geth instance.
+        filler_extra_args:
+          - --override.amsterdam=1
+        output_dir: ${EEST_FIXTURES_DIR}/geth
+
+      # Besu
+      - name: besu
+        force: true   # TODO: remove after one green build — forces an eest rebuild over the leftover partial fixtures (no fingerprint recorded); does NOT rebuild the state-actor datadir
+        filler_client: besu
+        filler_image: ethpandaops/besu:glamsterdam-devnet-7
+        source_dir: ${STATE_DIR}/besu
+        # besu reads forks from the geth-format genesis; benchmarkoor patches
+        # amsterdamTime in at boot (snapshot block 0 ts is 0, so amsterdam at ts 1).
+        genesis: ${STATE_DIR}/besu/besu-chainspec.json
+        genesis_fork_override: { amsterdam: 1 }
+        output_dir: ${EEST_FIXTURES_DIR}/besu

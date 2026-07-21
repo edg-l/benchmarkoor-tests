@@ -31,6 +31,7 @@ on:
         options:
           - "v1/bal-devnet-7"
           - "v1/glamsterdam-devnet-6"
+          - "v1/glamsterdam-devnet-7"
       test-type:
         description: "Test type to run"
         required: false
