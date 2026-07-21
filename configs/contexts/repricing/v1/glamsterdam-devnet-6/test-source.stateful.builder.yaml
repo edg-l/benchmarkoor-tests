@@ -7,8 +7,7 @@ builder:
       fork: amsterdam
       # Hardhat/Anvil dev key #0 → 0xf39Fd6…2266 (the pre-funded seed above).
       rpc_seed_key: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-     #gas_benchmark_values: [200,300]
-      gas_benchmark_values: [100]
+      gas_benchmark_values: [30]
       datadir_method: schelk
       tests:
         - tests/benchmark/stateful/bloatnet
@@ -19,6 +18,7 @@ builder:
           addr: "0x87a6314da5ac8832f6e7a176c8fb133b19f5be04"
           pkey: "0x4da32d29f6dcffa26e09dc4e102033f2d105de1444fb893493ae703289275e0e"
       marker: repricing
+      extract_opcode_count: true
     targets:
       # Nethermind
       - name: nethermind
