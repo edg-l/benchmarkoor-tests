@@ -30,6 +30,7 @@ on:
         type: choice
         options:
           - "v1/bal-devnet-7"
+          - "v1/glamsterdam-devnet-6"
       test-type:
         description: "Test type to run"
         required: false

@@ -5,6 +5,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CONTEXTS_DIR="${REPO_ROOT}/configs/contexts"
 
+# Only the repricing/v1/* contexts are dispatched. Each subdir there maps to a
+# benchmarkoor-run.yaml dispatch with context=repricing, subdir=v1/<name>,
+# snapshot=state-actor/v1.
+CONTEXT="repricing"
+VERSION="v1"
+SNAPSHOT="state-actor/${VERSION}"
+V1_DIR="${CONTEXTS_DIR}/${CONTEXT}/${VERSION}"
+
 CLIENTS=(geth erigon nethermind besu reth ethrex)
 
 cap() {
@@ -12,11 +20,12 @@ cap() {
   printf '%s%s' "$(printf '%s' "${s:0:1}" | tr '[:lower:]' '[:upper:]')" "${s:1}"
 }
 
-# Timeout in minutes for a (client, context, test_type) combo.
-get_timeout() {
-  local client="$1" context="$2" test_type="$3"
+# Run-phase timeout in minutes for a (client, test_type) combo. Feeds the "run"
+# field of the benchmarkoor-run.yaml `timeouts` JSON input.
+get_run_timeout() {
+  local client="$1" test_type="$2"
   if [[ "$test_type" == "stateful" ]]; then
-    if [[ "$client" == "erigon" && "$context" == "repricing" ]]; then
+    if [[ "$client" == "erigon" ]]; then
       echo "4500"
     else
       echo "2160"
@@ -28,171 +37,95 @@ get_timeout() {
   fi
 }
 
-# Print instance ids from clients.yaml that belong to the given client.
-# A match is an id equal to the client name or starting with `<client>-`.
-# If the only match is the bare client name, prints a single empty line
-# (signal: emit one entry without an instance-id).
-get_instance_ids() {
+# Build-phase timeout (minutes) for the benchmarkoor-run.yaml state-actor build
+# step. Matches the workflow's own default.
+BUILD_TIMEOUT=360
+
+# Print the `<client>-bal-full` instance id from clients.yaml, if present.
+# Only the bal-full variant is dispatched; other variants (bal-sequential,
+# bal-nobatchio, bal-full-aot, bare client name, …) are ignored.
+get_bal_full_id() {
   local clients_yaml="$1" client="$2"
   [[ -f "$clients_yaml" ]] || return 0
 
-  local ids=() id
+  local id
   while IFS= read -r id; do
-    if [[ "$id" == "$client" || "$id" == "${client}-"* ]]; then
-      ids+=("$id")
+    if [[ "$id" == "${client}-bal-full" ]]; then
+      echo "$id"
+      return 0
     fi
   done < <(sed -nE 's/^[[:space:]]+-[[:space:]]*id:[[:space:]]*([^[:space:]]+).*/\1/p' "$clients_yaml")
-
-  if [[ ${#ids[@]} -eq 0 ]]; then
-    return 0
-  elif [[ ${#ids[@]} -eq 1 && "${ids[0]}" == "$client" ]]; then
-    echo ""
-  else
-    printf '%s\n' "${ids[@]}"
-  fi
 }
 
-# Data directory types to generate configs for. "zfs" is the default and
-# produces the canonical benchmarkoor.<client>.yaml; any other type produces
-# benchmarkoor.<client>.<type>.yaml with an extra data-dir-type label/input.
-DATA_DIR_TYPES=(zfs schelk)
+context_display="$(cap "$CONTEXT")"
 
 for client in "${CLIENTS[@]}"; do
- for data_dir_type in "${DATA_DIR_TYPES[@]}"; do
-  if [[ "$data_dir_type" == "zfs" ]]; then
-    # Default type: canonical filenames, no infix, no extra label/input.
-    outfile="${SCRIPT_DIR}/benchmarkoor.${client}.yaml"
-    ddt_infix=""
-    datadir_id_suffix=""
-    datadir_label=""
-    datadir_input=""
-  else
-    # Non-default type: configs live in datadir.<type>.yaml /
-    # test-source.<test-type>.<type>.yaml and we only emit entries for which
-    # those variant files actually exist.
-    outfile="${SCRIPT_DIR}/benchmarkoor.${client}.${data_dir_type}.yaml"
-    ddt_infix=".${data_dir_type}"
-    datadir_id_suffix="-${data_dir_type}"
-    datadir_label="
-    data-dir-type: \"${data_dir_type}\""
-    datadir_input="
-    data-dir-type: \"${data_dir_type}\""
-  fi
+  outfile="${SCRIPT_DIR}/benchmarkoor.${client}.yaml"
   client_display="$(cap "$client")"
 
   entries=()
-  prev_subdir_key=""
-  pending_header=""
 
   while IFS= read -r subdir_path; do
     [[ -e "${subdir_path}/.dispatchoor_ignore" ]] && continue
 
-    rel="${subdir_path#${CONTEXTS_DIR}/}"
-    IFS='/' read -r context network block subdir <<< "$rel"
+    name="$(basename "$subdir_path")"
+    subdir="${VERSION}/${name}"
 
-    snapshot="${network}/${block}"
-    slug="${network}-${block}"
-    network_display="$(cap "$network")"
-    subdir_display="$(cap "$subdir")"
-    context_display="$(cap "$context")"
-
-    # Discover base test types from test-source.<type>.yaml in this subdir.
-    # Skip data-dir-type variants (e.g. test-source.compute.schelk.yaml): those
-    # carry a dot in the extracted name and are selected via data-dir-type, not
-    # as standalone test types.
+    # Discover test types from the runner test-source files
+    # (test-source.<type>.runner.yaml → <type>).
     test_types=()
-    for ts in "${subdir_path}"/test-source.*.yaml; do
+    for ts in "${subdir_path}"/test-source.*.runner.yaml; do
       [[ -e "$ts" ]] || continue
       tt="${ts##*/test-source.}"
-      tt="${tt%.yaml}"
+      tt="${tt%.runner.yaml}"
       [[ "$tt" == *.* ]] && continue
       test_types+=("$tt")
     done
     [[ ${#test_types[@]} -gt 0 ]] || continue
 
-    # For non-default data dir types, skip snapshots without a matching datadir.
-    if [[ -n "$ddt_infix" && ! -f "${REPO_ROOT}/configs/datadirs/${snapshot}/datadir${ddt_infix}.yaml" ]]; then
-      continue
-    fi
+    # Only dispatch the client's bal-full instance; skip subdirs without one.
+    instance_id="$(get_bal_full_id "${subdir_path}/clients.yaml" "$client")"
+    [[ -n "$instance_id" ]] || continue
 
-    # Discover instance ids for this client from clients.yaml.
-    instance_ids=()
-    while IFS= read -r id; do
-      instance_ids+=("$id")
-    done < <(get_instance_ids "${subdir_path}/clients.yaml" "$client")
-    [[ ${#instance_ids[@]} -gt 0 ]] || continue
-
-    # Stage the subdir header and flush it lazily, only once an actual entry is
-    # emitted, so subdirs that contribute no entries leave no orphan header.
-    subdir_key="${context}/${snapshot}/${subdir}"
-    if [[ "$subdir_key" != "$prev_subdir_key" ]]; then
-      pending_header="# === Context: ${context_display} ===
-# --- Subdir: ${subdir} (${snapshot}) ---"
-      prev_subdir_key="$subdir_key"
-    fi
+    entries+=("# --- Subdir: ${subdir} ---")
 
     for test_type in "${test_types[@]}"; do
-      # For non-default data dir types, skip test types without a matching
-      # test-source variant.
-      if [[ -n "$ddt_infix" && ! -f "${subdir_path}/test-source.${test_type}${ddt_infix}.yaml" ]]; then
-        continue
-      fi
-
       test_type_display="$(cap "$test_type")"
-      timeout="$(get_timeout "$client" "$context" "$test_type")"
+      run_timeout="$(get_run_timeout "$client" "$test_type")"
+      global_timeout=$(( BUILD_TIMEOUT + run_timeout ))
 
-      for instance_id in "${instance_ids[@]}"; do
-        id_suffix=""
-        name_suffix=""
-        instance_label=""
-        instance_input=""
-        if [[ -n "$instance_id" ]]; then
-          id_suffix="-${instance_id}"
-          name_suffix=" - ${instance_id}"
-          instance_label="
-    instance-id: \"${instance_id}\""
-          instance_input="
-    instance-id: \"${instance_id}\""
-        fi
-
-        if [[ -n "$pending_header" ]]; then
-          entries+=("$pending_header")
-          pending_header=""
-        fi
-
-        entries+=("- id: benchmarkoor-${client}-${context}-${slug}-${subdir}-${test_type}${id_suffix}${datadir_id_suffix}
-  name: \"(${client_display}) - ${context_display} - ${network_display}(${block}) - ${subdir_display} - ${test_type_display}${name_suffix}\"
+      entries+=("- id: benchmarkoor-${client}-${CONTEXT}-${VERSION}-${name}-${test_type}-${instance_id}
+  name: \"(${client_display}) - ${context_display} - ${subdir} - ${test_type_display} - ${instance_id}\"
   owner: ethpandaops
   repo: benchmarkoor-tests
-  workflow_id: benchmarkoor.yaml
+  workflow_id: benchmarkoor-run.yaml
   ref: master
   labels:
     el-client: \"${client}\"
-    network: \"${network}\"
-    block: \"${block}\"
+    snapshot: \"${SNAPSHOT}\"
     subdir: \"${subdir}\"
     test-type: \"${test_type}\"
-    context: \"${context}\"${instance_label}${datadir_label}
+    context: \"${CONTEXT}\"
+    instance-id: \"${instance_id}\"
   inputs:
-    run-timeout-minutes: \"${timeout}\"
     clients: '[\"${client}\"]'
-    snapshot: \"${snapshot}\"
+    instance-id: \"${instance_id}\"
+    snapshot: \"${SNAPSHOT}\"
     subdir: \"${subdir}\"
     test-type: \"${test_type}\"
-    context: \"${context}\"${instance_input}${datadir_input}")
-      done
+    context: \"${CONTEXT}\"
+    timeouts: '{\"build\": ${BUILD_TIMEOUT}, \"run\": ${run_timeout}, \"global\": ${global_timeout}}'")
     done
-  done < <(find "${CONTEXTS_DIR}" -mindepth 4 -maxdepth 4 -type d | sort)
+  done < <(find "${V1_DIR}" -mindepth 1 -maxdepth 1 -type d | sort)
 
   {
     echo "# AUTO-GENERATED FILE - DO NOT EDIT MANUALLY"
     echo "# Regenerate with: make config (or ./dispatchoor/generate.sh)"
-    echo "# Source: configs/contexts/<context>/<network>/<block>/<subdir>/"
+    echo "# Source: configs/contexts/repricing/v1/<subdir>/"
     for entry in "${entries[@]}"; do
       echo ""
       echo "$entry"
     done
   } > "${outfile}"
   echo "Generated ${outfile} (${#entries[@]} entries)"
- done
 done
