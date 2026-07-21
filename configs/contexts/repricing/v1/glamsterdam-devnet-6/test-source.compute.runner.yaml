@@ -1,0 +1,19 @@
+runner:
+  benchmark:
+    tests:
+      metadata:
+        labels:
+          name: state-actor-v1-amsterdam-compute
+          block: "0"
+          test-type: compute
+          context: repricing
+          fork: amsterdam
+          data-disk-type: schelk
+      source:
+        eest_fixtures:
+          # TODO: fixtures_url: https://github.com/ethpandaops/benchmarkoor-tests/releases/download/eest-payloads-state-actor-v1-amsterdam-2c03f00c/eest-payloads-state-actor-v1-amsterdam-compute-nethermind.tar.gz
+          # TODO: fixtures_subdir: benchmarkoor-build-artifacts/eest-payloads/nethermind/blockchain_tests_stateful_engine
+  container_runtime: podman
+  client:
+    config:
+      rollback_strategy: none
