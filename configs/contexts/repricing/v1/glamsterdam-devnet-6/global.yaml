@@ -1,4 +1,3 @@
 global:
   env:
-    EEST_FIXTURES_DIR: /tmp/benchmarkoor/eest-fixtures/full-amsterdam-stateful
-    EEST_FIXTURES_RUNNER_SOURCE: nethermind   # which filler's fixtures the runner replays
+    EEST_FIXTURES_DIR: /tmp/benchmarkoor/eest-fixtures/glamsterdam-devnet-6
