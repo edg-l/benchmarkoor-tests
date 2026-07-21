@@ -65,7 +65,7 @@ jobs:
     runs-on:
       group: gasbenchmark
       labels:
-        - benchmarkoor-v1-runner--${{ matrix.client }}
+        - benchmarkoor-v1-runner-${{ matrix.client }}
     # Whole-job cap; each phase also has its own step-level timeout below
     # (both read from the timeouts JSON input). Keep global >= build + run.
     timeout-minutes: ${{ fromJSON(inputs.timeouts).global }}
