@@ -2,7 +2,7 @@ builder:
   eest_payloads:
     pull_policy: always
     eest_repo: https://github.com/ethereum/execution-specs.git
-    eest_ref: devnets/glamsterdam/6-benchmarks
+    eest_ref: forks/amsterdam
     config:
       fork: amsterdam
       # Hardhat/Anvil dev key #0 → 0xf39Fd6…2266 (the pre-funded seed above).
