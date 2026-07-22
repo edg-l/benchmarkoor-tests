@@ -38,6 +38,11 @@ on:
         description: 'Raw YAML config content to pass via --config (appended after URL config)'
         required: false
         default: ''
+      force:
+        description: 'Force rebuild of the state-actor datadir even if the output dir is already populated (records a fresh baseline). Use to rebuild over a partial/poisoned datadir.'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   benchmarkoor:
@@ -95,4 +100,5 @@ jobs:
           build-args: >-
             --rebuild-on-diff
             --limit-state-actor-target=${{ matrix.client }}
+            ${{ inputs.force && '--force' || '' }}
           build-config: ${{ inputs.build-config }}
