@@ -3,7 +3,7 @@ builder:
   state_actor:
     images: # TODO: We should probably pin the sha256 or a verision of the state-actor images
       geth: ghcr.io/ethereum/state-actor:main
-      nethermind: ghcr.io/ethereum/state-actor-nethermind:pr-112
+      nethermind: ghcr.io/ethereum/state-actor-nethermind:main
       ethrex: ghcr.io/ethereum/state-actor-ethrex:main
       reth: ghcr.io/ethereum/state-actor-reth:main
       besu: ghcr.io/ethereum/state-actor-besu:main
