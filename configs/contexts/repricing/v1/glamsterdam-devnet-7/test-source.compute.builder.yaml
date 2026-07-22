@@ -30,6 +30,7 @@ builder:
         filler_extra_args:
           - --FlatDb.Enabled=true
           - --FlatDb.CompactionOffset=0
+          - --FlatDb.MinReorgDepth=1024
           - --FlatDb.MaxReorgDepth=1024
           - --Init.AutoDump=None
           - --Merge.NewPayloadBlockProcessingTimeout=70000
