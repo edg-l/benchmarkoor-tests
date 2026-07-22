@@ -5,7 +5,7 @@ builder:
     eest_ref: forks/amsterdam
     config:
       fork: amsterdam
-      # Hardhat/Anvil dev key #0 → 0xf39Fd6…2266 (the pre-funded seed above).
+      # Key #0 → 0xf39Fd6…2266 (the pre-funded seed in the state-actor template)
       rpc_seed_key: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
       gas_benchmark_values: [100,120,140,160,180,200,220,240,260,280,300]
       datadir_method: schelk
