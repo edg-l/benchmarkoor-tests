@@ -49,7 +49,7 @@ on:
       build-timeout-minutes:
         description: "Timeout for the benchmark build (minutes)"
         required: false
-        default: "500"
+        default: "2160"
       image:
         description: "Benchmarkoor docker image"
         required: false
