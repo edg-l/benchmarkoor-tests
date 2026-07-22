@@ -1,0 +1,98 @@
+name: benchmarkoor-build-state-actor
+
+# Builds ONLY the state-actor data directory (no eest-payloads fill). The test
+# context/subdir/test-type select the eest test source, which isn't used here —
+# a state-actor datadir build only needs snapshot + clients.
+run-name: "benchmarkoor-build-state-actor · snapshot=${{ inputs.snapshot }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      clients:
+        description: "JSON array of execution clients to benchmark"
+        required: false
+        default: '["nethermind"]'
+      instance-id:
+        description: "Set this if you have multiple configurations for the same client but just want to run one of them"
+        required: false
+        default: ""
+      snapshot:
+        description: "Snapshot path "
+        required: false
+        type: choice
+        options:
+          - "state-actor/v1"
+      build-timeout-minutes:
+        description: "Timeout for the benchmark build (minutes)"
+        required: false
+        default: "2160"
+      image:
+        description: "Benchmarkoor docker image"
+        required: false
+        default: "ghcr.io/ethpandaops/benchmarkoor:master"
+      git-ref:
+        description: "Git reference to checkout for benchmarkoor"
+        required: false
+        default: ""
+      build-config:
+        description: 'Raw YAML config content to pass via --config (appended after URL config)'
+        required: false
+        default: ''
+
+jobs:
+  benchmarkoor:
+    strategy:
+      fail-fast: false
+      matrix:
+        client: ${{ fromJSON(inputs.clients) }}
+    runs-on:
+      group: gasbenchmark
+      labels:
+        - benchmarkoor-v1-runner-${{ matrix.client }}
+        # Pin each client's build to a specific host. Unlisted clients fall back
+        # to their per-client label (harmless duplicate → no host pin).
+        #- >-
+        #  ${{
+        #    (matrix.client == 'nethermind' && 'benchmarkoor-v1-runner-benchmark-ci-9') ||
+        #    (matrix.client == 'geth' && 'benchmarkoor-v1-runner-benchmark-ci-8') ||
+        #    (matrix.client == 'besu' && 'benchmarkoor-v1-runner-benchmark-ci-16') ||
+        #    format('benchmarkoor-v1-runner-{0}', matrix.client)
+        #  }}
+    timeout-minutes: ${{ fromJSON(inputs.build-timeout-minutes) }}
+    steps:
+      - name: "Infos: Client=${{ matrix.client }} | Snapshot=${{ inputs.snapshot }}"
+        run: |
+          echo "client: ${{ matrix.client }}"
+          echo "snapshot: ${{ inputs.snapshot }}"
+          echo "build-timeout-minutes: ${{ inputs.build-timeout-minutes }}"
+          echo "image: ${{ inputs.image }}"
+          echo "git-ref: ${{ inputs.git-ref }}"
+
+      - uses: actions/checkout@v5
+
+      - name: Calculate builder run timeout
+        id: calc
+        run: |
+          echo "builder_timeout=$(( ${{ inputs.build-timeout-minutes }} - 30 ))m" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        uses: ethpandaops/benchmarkoor@master
+        env:
+          BENCHMARKOOR_BUILDER_RUN_TIMEOUT: ${{ steps.calc.outputs.builder_timeout }}
+        with:
+          mode: build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ inputs.image }}
+          git-ref: ${{ inputs.git-ref }}
+          upload-artifacts: "false"
+          # Upload each client's state-actor manifest as a per-client artifact.
+          upload-build-artifacts: "true"
+          build-artifact-name: benchmarkoor-build-${{ github.run_id }}-${{ matrix.client }}
+          build-config-urls: >-
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/datadirs/${{ inputs.snapshot }}/global.yaml,
+            https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/datadirs/${{ inputs.snapshot }}/builder.yaml,
+          build-args: >-
+            --rebuild-on-diff
+            --limit-state-actor-target=${{ matrix.client }}
+          build-config: ${{ inputs.build-config }}
