@@ -1,8 +1,8 @@
 # benchmarkoor-tests
 
-Configuration and orchestration repository for Ethereum execution client benchmarking. It defines test scenarios, client configurations, network snapshots, and contexts to systematically benchmark different EL client implementations under various conditions.
+Configuration and orchestration repository for Ethereum execution client benchmarking. It defines the synthetic **state-actor** prestates, client configurations, test contexts, and GitHub Actions pipelines used to systematically benchmark execution-layer (EL) client implementations.
 
-This repository coordinates with the [benchmarkoor](https://github.com/ethpandaops/benchmarkoor) runner to execute performance tests.
+This repository coordinates with the [benchmarkoor](https://github.com/ethpandaops/benchmarkoor) runner to build prestates, fill test payloads, and execute performance tests.
 
 ## Supported Clients
 
@@ -12,91 +12,93 @@ This repository coordinates with the [benchmarkoor](https://github.com/ethpandao
 - Besu
 - Reth
 - Ethrex
-- Nimbus
+
+(Some contexts also define additional runner-only instances, e.g. Nimbus.)
+
+## Overview
+
+Benchmarks run against a synthetic **state-actor** prestate — a large, deterministically-generated datadir (EOAs, contracts, storage, delegations, predeploys) rather than a snapshot of a live network. The end-to-end flow is three separate GitHub Actions workflows:
+
+1. **Build** — construct the state-actor datadir for a client (using `state-actor` builder images), then fill [EEST](https://github.com/ethereum/execution-spec-tests) benchmark payloads against it.
+2. **Release** — promote the filled payloads from a build run into a GitHub Release.
+3. **Run** — replay the payloads against the client and upload results to S3.
 
 ## Configuration
 
-All test configurations live under `configs/`. The directory structure follows this hierarchy:
+All configuration lives under `configs/`:
 
-```yaml
+```
 configs/
-├── global.yaml                            # Global runner settings (log level, cleanup, etc.)
-├── resource-limits-eip-7870-fullnode.yaml # Hardware constraints for fullnode tests
-├── resource-limits-eip-7870-attester.yaml # Hardware constraints for attester tests
-├── s3-upload.yaml                         # S3 results upload configuration
-├── s3-indexing.yaml                       # Results indexing configuration
-├── contexts/
-│   └── <context>/<network>/<block>/<subdir>/
-│       ├── clients.yaml                   # Client images, instance ids, and extra args
-│       ├── genesis.yaml                   # Custom genesis config (defines the active fork)
-│       ├── test-source.<test-type>.yaml   # One file per supported test type
-│       └── .dispatchoor_ignore            # (optional) skip this subdir during dispatch generation
-└── datadirs/
-    └── <network>/<block>/
-        └── datadir.yaml                   # ZFS snapshot references per client
+├── global.yaml                             # Global benchmarkoor settings
+├── resource-limits-eip-7870-fullnode.yaml  # Hardware constraints (fullnode)
+├── resource-limits-eip-7870-attester.yaml  # Hardware constraints (attester)
+├── s3-upload.yaml                           # S3 results upload configuration
+├── datadirs/
+│   └── state-actor/v1/
+│       ├── global.yaml                      # State-actor-wide settings
+│       ├── builder.yaml                     # Prestate spec: entities, target_size, per-client builder images
+│       └── runner.yaml                      # Datadir mount method (schelk) used by runs
+└── contexts/
+    └── repricing/v1/<subdir>/
+        ├── global.yaml                      # Context-wide settings
+        ├── clients.yaml                     # Per-client runner instances (image, extra args, genesis overrides)
+        ├── test-source.<test-type>.builder.yaml   # How to FILL payloads (EEST ref, fork, gas values, filler images)
+        └── test-source.<test-type>.runner.yaml    # Where a run FETCHES the filled payloads
 ```
 
-A test run is fully identified by the tuple `(context, snapshot, subdir, test-type, client, instance-id)`. The workflow assembles the configs by fetching the files under that tuple's directory.
+A run is identified by the tuple `(snapshot, context, subdir, test-type, client, instance-id)`. Today `snapshot` is always `state-actor/v1` and `context` is always `repricing`; the variation is in `subdir`, `test-type`, and `client`. Each workflow assembles its config by fetching the files for that tuple from this repo, pinned to the dispatched commit (`github.sha`).
 
-### Context
+### Snapshot (state-actor prestate)
 
-A **context** defines the scenario being tested. Each context can host any set of snapshots and subdirs; what exists on disk is what is runnable.
+`snapshot` selects a prestate version under `configs/datadirs/<snapshot>/`. The only snapshot today is `state-actor/v1`. Its `builder.yaml` defines the prestate: the entities to generate (sequential EOAs, CREATE2 contract families, bloated storage, EIP-7702 delegations, EIP-8282 request predeploys, …), the target datadir size, and the per-client `state-actor` builder images. The datadir is materialized on build hosts and mounted into runs via schelk.
 
-| Context | Description |
-|---------|-------------|
-| `repricing` | Gas price repricing changes (EIP-7870) |
-| `bal` | Block-level access list scenarios |
-| `bloating` | State bloating scenarios |
+### Context & Subdir
 
-### Snapshot
+The only **context** is `repricing` (gas-repricing / EIP-7870 scenarios). A **subdir** is a `v1/<name>` directory under it that groups a `clients.yaml`, `global.yaml`, and the `test-source.*` files. Subdir names track the fork / devnet variant:
 
-A **snapshot** identifies a specific network state to benchmark against, defined as `<network>/<block>`. Each snapshot must have a matching `configs/datadirs/<network>/<block>/datadir.yaml`.
-
-| Snapshot | Description |
-|----------|-------------|
-| `mainnet/24350000` | Mainnet at block 24,350,000 |
-| `perf-devnet-3/24358000` | Performance devnet 3 at block 24,358,000 |
-| `jochemnet/24402727` | Jochemnet at block 24,402,727 |
-
-Snapshots are backed by ZFS, allowing fast client datadir setup via cloning.
-
-### Subdirectory
-
-A **subdir** is the leaf directory under `contexts/<context>/<network>/<block>/`. It groups a `genesis.yaml`, `clients.yaml`, and one or more `test-source.<test-type>.yaml` files together. The subdir name is free-form — it typically reflects the fork rules and/or devnet variant baked into the genesis.
-
-Examples currently in the repo: `osaka`, `amsterdam-devnet-3`, `amsterdam-devnet-6`.
+| Subdir | Description |
+|--------|-------------|
+| `v1/bal-devnet-7` | BAL devnet-7 variant |
+| `v1/glamsterdam-devnet-6` | Glamsterdam devnet-6 variant |
+| `v1/glamsterdam-devnet-7` | Glamsterdam devnet-7 variant |
 
 ### Test Types
 
-Test types are discovered per subdir from the `test-source.<test-type>.yaml` files present.
-
 | Type | Description |
 |------|-------------|
-| `stateful` | Full state-transition tests using podman + CRIU checkpoint/restore |
-| `compute` | Stateless computation benchmarks |
+| `stateful` | State-access benchmarks over the bloated state-actor prestate (bloatnet) |
+| `compute` | Compute / precompile / instruction benchmarks |
 
-## Workflow
+Each test type has two test-source files:
 
-The GitHub Actions workflow (`.github/workflows/benchmarkoor.yaml`) accepts inputs for `clients`, `snapshot`, `context`, `subdir`, `test-type`, and `instance-id`, then:
+- `test-source.<type>.builder.yaml` — used during a **build** to fill EEST payloads (EEST repo/ref, `fork`, `gas_benchmark_values`, `extract_opcode_count`, address stubs, and per-client filler images / extra args).
+- `test-source.<type>.runner.yaml` — used during a **run** to fetch the filled payloads and replay them.
 
-1. Constructs URLs to the relevant YAML configs from this repo
-2. Merges them in order: global → resource-limits → s3 → datadir → genesis → test-source → clients
-3. Runs the benchmarkoor action for each client in the matrix
-4. Uploads results to S3
+## Workflows
+
+All workflows are `workflow_dispatch`-only and must be dispatched from the default branch. They fetch config from this repo pinned to the dispatched commit.
+
+| Workflow | Purpose |
+|----------|---------|
+| `benchmarkoor-build.yaml` | Build the state-actor datadir **and** fill EEST payloads per client; upload per-client artifacts (consumed by release). |
+| `benchmarkoor-build-state-actor.yaml` | Build **only** the state-actor datadir (no payload fill). Has a `force` input to rebuild over an already-populated/partial datadir. |
+| `benchmarkoor-release.yaml` | Promote the filled payloads from a build run into a GitHub Release. |
+| `benchmarkoor-run.yaml` | Build the datadir, replay the payloads, and upload results to S3. |
+
+Common inputs: `clients` (JSON array), `snapshot`, `context`, `subdir`, `test-type`, and `instance-id`. `benchmarkoor-build-state-actor.yaml` takes only `snapshot` + `clients` (plus `force`), since the test context is irrelevant to a datadir-only build.
+
+Config merge order:
+
+- **build:** `global` → `datadirs/<snapshot>/{global,builder}` → `contexts/<context>/<subdir>/{global, test-source.<test-type>.builder}`
+- **run:** `global` → resource-limits → `s3-upload` → `datadirs/<snapshot>/{global,runner}` → `contexts/<context>/<subdir>/{global, test-source.<test-type>.runner, clients}`
 
 ## Dispatchoor
 
-The `dispatchoor/` directory contains generated job definitions used by the [dispatchoor](https://github.com/ethpandaops/dispatchoor) to trigger benchmark runs.
+The `dispatchoor/` directory holds generated job definitions for [dispatchoor](https://github.com/ethpandaops/dispatchoor) to trigger `benchmarkoor-run.yaml`.
 
-`dispatchoor/generate.sh` produces one YAML file per client (`benchmarkoor.<client>.yaml`) by walking `configs/contexts/`. For every `<context>/<network>/<block>/<subdir>` it:
+`dispatchoor/generate.sh` produces one file per client (`benchmarkoor.<client>.yaml`) by scanning `configs/contexts/repricing/v1/*`. For each subdir it emits a dispatch entry per test type (`stateful`, `compute`) for that client's `<client>-bal-full` instance, targeting `benchmarkoor-run.yaml`. Subdirs with a `.dispatchoor_ignore` file are skipped.
 
-- Discovers test types from the `test-source.<test-type>.yaml` files in the subdir.
-- Discovers per-client instance ids from `clients.yaml` (matching `<client>` or `<client>-*`); a client with no matching entry is skipped for that subdir.
-- Emits one dispatch entry per `(test-type, instance-id)` combination.
-
-To skip a subdir during generation, drop an empty `.dispatchoor_ignore` file inside it.
-
-Run the generator via:
+Regenerate with:
 
 ```bash
 make config
