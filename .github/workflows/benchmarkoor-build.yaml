@@ -122,7 +122,7 @@ jobs:
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/global.yaml,
             https://raw.githubusercontent.com/ethpandaops/benchmarkoor-tests/${{ github.sha }}/configs/contexts/${{ inputs.context }}/${{ inputs.subdir }}/test-source.${{ inputs.test-type }}.builder.yaml,
           build-args: >-
-            --rebuild-on-diff
+            --force=true
             --limit-state-actor-target=${{ matrix.client }}
             --limit-eest-payload-target=${{ matrix.client }}
           build-config: ${{ inputs.build-config }}
