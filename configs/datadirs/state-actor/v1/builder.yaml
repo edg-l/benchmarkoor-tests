@@ -14,8 +14,7 @@ builder:
       fork: osaka
       chain: 1337
       gas_limit: 1000000000 # 1TGas
-      #target_size: 200GB
-      target_size: 1GB # Temporary, just to iterate quicker.
+      target_size: 350GB
     spec:
       entities:
         # Pre-funded seed for fill-stateful — Hardhat/Anvil dev key #0
@@ -56,25 +55,25 @@ builder:
           parameters:
             initcode: "0x60016000f3"
             runtime: "0x00"
-            salt_count: 100000 # 100K
+            salt_count: 150000 # 150K
         - kind: contract
           name: create2-same-300m
           template: create2_deploys
           parameters:
             code_pattern: max_same_pre_amsterdam
-            salt_count: 100000 # 100K
+            salt_count: 150000 # 150K
         - kind: contract
           name: create2-diff-300m
           template: create2_deploys
           parameters:
             code_pattern: max_diff_pre_amsterdam
-            salt_count: 100000 # 100K
+            salt_count: 150000 # 150K
         - kind: contract
           name: create2-jumpdest-300m
           template: create2_deploys
           parameters:
             code_pattern: unique_jumpdest_pre_amsterdam
-            salt_count: 100000 # 100K
+            salt_count: 150000 # 150K
         # Sender pool for test_ether_transfers_onchain_receivers, which derives
         # senders as EOA(key=SENDER_BASE_KEY + i) and assumes them pre-funded.
         # SENDER_BASE_KEY = keccak256("gas-repricings-private-key") on this EEST
@@ -107,7 +106,7 @@ builder:
           parameters:
             start_pkey: "0x959a83d905ff1fab43bf72c3e87020e4c77fd4bde0e5eeb48e5edbf74a9ec64e"
             code_pattern: max_diff_pre_amsterdam
-            count: 100000 # 100K
+            count: 150000 # 150K
             balance: "1000000000000000000"
         # EIP-8282 builder-execution-request predeploys (system-called at end of
         # every block since amsterdam). Strict clients (besu/nethermind/ethrex)
