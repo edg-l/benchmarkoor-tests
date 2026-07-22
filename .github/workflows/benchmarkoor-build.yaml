@@ -75,13 +75,13 @@ jobs:
         - benchmarkoor-v1-runner-${{ matrix.client }}
         # Pin each client's build to a specific host. Unlisted clients fall back
         # to their per-client label (harmless duplicate → no host pin).
-        - >-
-          ${{
-            (matrix.client == 'nethermind' && 'benchmarkoor-v1-runner-benchmark-ci-9') ||
-            (matrix.client == 'geth' && 'benchmarkoor-v1-runner-benchmark-ci-8') ||
-            (matrix.client == 'besu' && 'benchmarkoor-v1-runner-benchmark-ci-16') ||
-            format('benchmarkoor-v1-runner-{0}', matrix.client)
-          }}
+        #- >-
+        #  ${{
+        #    (matrix.client == 'nethermind' && 'benchmarkoor-v1-runner-benchmark-ci-9') ||
+        #    (matrix.client == 'geth' && 'benchmarkoor-v1-runner-benchmark-ci-8') ||
+        #    (matrix.client == 'besu' && 'benchmarkoor-v1-runner-benchmark-ci-16') ||
+        #    format('benchmarkoor-v1-runner-{0}', matrix.client)
+        #  }}
     timeout-minutes: ${{ fromJSON(inputs.build-timeout-minutes) }}
     steps:
       - name: "Infos: Client=${{ matrix.client }} | Snapshot=${{ inputs.snapshot }} | TestType=${{ inputs.test-type }} | Context=${{ inputs.context }} | Subdirectory=${{ inputs.subdir }}"
