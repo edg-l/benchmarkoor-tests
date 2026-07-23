@@ -8,6 +8,7 @@ runner:
     #       bal-mode: sequential
     #   image: ethpandaops/geth:glamsterdam-devnet-7
     #   extra_args:
+    #     - --engine.maxreorgdepth=1024
     #     - --override.amsterdam=1
     #     - --debug.logslowblock=0
     #     - --bal.executionmode=sequential
@@ -23,6 +24,7 @@ runner:
           bal-mode: full
       image: ethpandaops/geth:glamsterdam-devnet-7
       extra_args:
+        - --engine.maxreorgdepth=1024
         - --override.amsterdam=1
         - --debug.logslowblock=0
         #- --bal.executionmode=full
@@ -36,6 +38,7 @@ runner:
     #       bal-mode: nobatchio
     #   image: ethpandaops/geth:glamsterdam-devnet-7
     #   extra_args:
+    #     - --engine.maxreorgdepth=1024
     #     - --override.amsterdam=1
     #     - --debug.logslowblock=0
     #     - --bal.executionmode=nobatchio
