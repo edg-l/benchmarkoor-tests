@@ -112,12 +112,18 @@ jobs:
 
           SNAP_SLUG=${SNAP//\//-}
           ASSET_BASE="eest-payloads-${SNAP_SLUG}-${FORK}-${TT}"
+          # Build run's UTC timestamp — unique per build, yet stable across
+          # release re-runs of the same build (re-releasing updates in place
+          # instead of spawning a duplicate). Guarantees no tag collisions even
+          # when two builds share snapshot/fork/test-type/eest_sha.
+          BUILD_CREATED=$(gh run view "$BUILD_RUN_ID" -R "$REPO" --json createdAt -q .createdAt)
+          BUILD_TS=$(date -u -d "$BUILD_CREATED" +%Y%m%d-%H%M%S)
           TAG='${{ inputs.tag }}'
-          [ -n "$TAG" ] || TAG="eest-payloads-${SNAP_SLUG}-${FORK}-${TT}-${EEST_SHA:0:8}"
+          [ -n "$TAG" ] || TAG="eest-payloads-${SNAP_SLUG}-${FORK}-${TT}-${EEST_SHA:0:8}-${BUILD_TS}"
 
           # Date-prefixed title (build run's date = when the payloads were made,
           # stable across release re-runs) so releases sort/scan cleanly.
-          BUILD_DATE=$(date -u -d "$(gh run view "$BUILD_RUN_ID" -R "$REPO" --json createdAt -q .createdAt)" +%Y.%m.%d)
+          BUILD_DATE=$(date -u -d "$BUILD_CREATED" +%Y.%m.%d)
           TITLE="${BUILD_DATE} · EEST ${TT} payloads — ${SNAP} · ${FORK} · ${EEST_SHA:0:8}"
 
           {
