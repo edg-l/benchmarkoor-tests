@@ -1,20 +1,21 @@
 runner:
   instances:
     # Geth
-    - id: geth-bal-sequential
-      client: geth
-      metadata:
-        labels:
-          bal-mode: sequential
-      image: ethpandaops/geth:glamsterdam-devnet-7
-      extra_args:
-        - --override.amsterdam=1
-        - --debug.logslowblock=0
-        - --bal.executionmode=sequential
-      #opcode_extraction:
-      #  enabled: true
-      #  timeout: 4m
+    # - id: geth-bal-sequential
+    #   client: geth
+    #   metadata:
+    #     labels:
+    #       bal-mode: sequential
+    #   image: ethpandaops/geth:glamsterdam-devnet-7
+    #   extra_args:
+    #     - --override.amsterdam=1
+    #     - --debug.logslowblock=0
+    #     - --bal.executionmode=sequential
+    #   #opcode_extraction:
+    #   #  enabled: true
+    #   #  timeout: 4m
 
+    ### NOTE: Geth doesn't have the bal.* flags anymore in ethpandaops/geth:glamsterdam-devnet-7
     - id: geth-bal-full
       client: geth
       metadata:
@@ -24,20 +25,20 @@ runner:
       extra_args:
         - --override.amsterdam=1
         - --debug.logslowblock=0
-        - --bal.executionmode=full
+        #- --bal.executionmode=full
         #- --bal.prefetchworkers=300
         #- --bal.blockingprefetch
 
-    - id: geth-bal-nobatchio
-      client: geth
-      metadata:
-        labels:
-          bal-mode: nobatchio
-      image: ethpandaops/geth:glamsterdam-devnet-7
-      extra_args:
-        - --override.amsterdam=1
-        - --debug.logslowblock=0
-        - --bal.executionmode=nobatchio
+    # - id: geth-bal-nobatchio
+    #   client: geth
+    #   metadata:
+    #     labels:
+    #       bal-mode: nobatchio
+    #   image: ethpandaops/geth:glamsterdam-devnet-7
+    #   extra_args:
+    #     - --override.amsterdam=1
+    #     - --debug.logslowblock=0
+    #     - --bal.executionmode=nobatchio
 
     # Besu
     - id: besu-bal-sequential
