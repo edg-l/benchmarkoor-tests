@@ -17,7 +17,7 @@ runner:
         source_dir: ${STATE_DIR}/erigon
         method: schelk
       ethrex:
-        source_dir: ${STATE_DIR}/ethrex
+        source_dir: ${STATE_DIR}/ethrex/chain-1337
         method: schelk
     config:
       genesis:
