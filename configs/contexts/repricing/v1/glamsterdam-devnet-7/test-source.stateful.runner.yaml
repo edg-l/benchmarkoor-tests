@@ -3,7 +3,7 @@ runner:
     tests:
       metadata:
         labels:
-          name: state-actor-glamsterdam-devnet-7-compute
+          name: state-actor-glamsterdam-devnet-7-stateful
           block: "0"
           test-type: stateful
           context: repricing
