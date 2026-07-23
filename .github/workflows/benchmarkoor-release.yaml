@@ -84,13 +84,30 @@ jobs:
             exit 1
           fi
 
-          # fork + eest_sha from the first client's sidecar.
+          # fork + eest_sha from the first client's sidecar. Prefer the build
+          # sidecar (.benchmarkoor-build.json, written on successful build
+          # completion); fall back to the fill sidecar (.benchmarkoor-fill.json,
+          # written during the fill so it's present even when the build later
+          # failed on some tests and .benchmarkoor-build.json is absent).
           FIRST=$(echo "$CLIENTS" | jq -r '.[0]')
           gh run download "$BUILD_RUN_ID" -n "${PREFIX}${FIRST}" -R "$REPO" -D artifact
           tar -xzf artifact/benchmarkoor-build-artifacts.tar.gz -C artifact
-          SIDECAR="artifact/benchmarkoor-build-artifacts/eest-payloads/${FIRST}/.benchmarkoor-build.json"
-          FORK=$(jq -r '.inputs.fork' "$SIDECAR")
-          EEST_SHA=$(jq -r '.inputs.eest_sha' "$SIDECAR")
+          PAYLOAD_DIR="artifact/benchmarkoor-build-artifacts/eest-payloads/${FIRST}"
+          BUILD_SIDECAR="${PAYLOAD_DIR}/.benchmarkoor-build.json"
+          FILL_SIDECAR="${PAYLOAD_DIR}/.benchmarkoor-fill.json"
+          FORK=""; EEST_SHA=""
+          if [ -f "$BUILD_SIDECAR" ]; then
+            FORK=$(jq -r '.inputs.fork // ""' "$BUILD_SIDECAR")
+            EEST_SHA=$(jq -r '.inputs.eest_sha // ""' "$BUILD_SIDECAR")
+          fi
+          if [ -f "$FILL_SIDECAR" ]; then
+            [ -n "$FORK" ] || FORK=$(jq -r '.fork // ""' "$FILL_SIDECAR")
+            [ -n "$EEST_SHA" ] || EEST_SHA=$(jq -r '.eest_sha // ""' "$FILL_SIDECAR")
+          fi
+          if [ -z "$FORK" ] || [ -z "$EEST_SHA" ]; then
+            echo "::error::Could not read fork/eest_sha from ${FIRST}'s .benchmarkoor-build.json or .benchmarkoor-fill.json on run $BUILD_RUN_ID."
+            exit 1
+          fi
 
           SNAP_SLUG=${SNAP//\//-}
           ASSET_BASE="eest-payloads-${SNAP_SLUG}-${FORK}-${TT}"
