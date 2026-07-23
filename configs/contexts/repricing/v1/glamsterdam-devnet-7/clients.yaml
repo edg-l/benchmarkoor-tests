@@ -184,6 +184,8 @@ runner:
         - --Init.BaseDbPath=/data
         - --FlatDb.Enabled=true
         - --FlatDb.CompactionOffset=0
+        - --FlatDb.MinReorgDepth=1024
+        - --FlatDb.MaxReorgDepth=1024
         - --Blocks.ParallelExecution=true # Default is true, but set explicitly for clarity
         - --Blocks.ParallelExecutionBatchRead=true # Default is true, but set explicitly for clarity
 
@@ -198,6 +200,8 @@ runner:
         - --Init.BaseDbPath=/data
         - --FlatDb.Enabled=true
         - --FlatDb.CompactionOffset=0
+        - --FlatDb.MinReorgDepth=1024
+        - --FlatDb.MaxReorgDepth=1024
         - --Blocks.ParallelExecution=false
         - --Blocks.ParallelExecutionBatchRead=false
 
@@ -212,6 +216,8 @@ runner:
         - --Init.BaseDbPath=/data
         - --FlatDb.Enabled=true
         - --FlatDb.CompactionOffset=0
+        - --FlatDb.MinReorgDepth=1024
+        - --FlatDb.MaxReorgDepth=1024
         - --Blocks.ParallelExecution=true
         - --Blocks.ParallelExecutionBatchRead=false
 
