@@ -113,7 +113,7 @@ jobs:
           SNAP_SLUG=${SNAP//\//-}
           ASSET_BASE="eest-payloads-${SNAP_SLUG}-${FORK}-${TT}"
           TAG='${{ inputs.tag }}'
-          [ -n "$TAG" ] || TAG="eest-payloads-${SNAP_SLUG}-${FORK}-${EEST_SHA:0:8}"
+          [ -n "$TAG" ] || TAG="eest-payloads-${SNAP_SLUG}-${FORK}-${TT}-${EEST_SHA:0:8}"
 
           # Date-prefixed title (build run's date = when the payloads were made,
           # stable across release re-runs) so releases sort/scan cleanly.
