@@ -135,14 +135,14 @@ builder:
 
     targets:
       - client: geth
-        output_dir: ${STATE_DIR}/geth          # ~338 GB
+        output_dir: ${STATE_DIR}/geth          # ~554 GB
       - client: nethermind
-        output_dir: ${STATE_DIR}/nethermind    # ~248 GB
+        output_dir: ${STATE_DIR}/nethermind    # ~520 GB
       - client: ethrex
-        output_dir: ${STATE_DIR}/ethrex        # ~436 GB
+        output_dir: ${STATE_DIR}/ethrex        # ~720 GB
       - client: reth
-        output_dir: ${STATE_DIR}/reth          # ~353 GB
+        output_dir: ${STATE_DIR}/reth          # ~588 GB
       - client: besu
-        output_dir: ${STATE_DIR}/besu          # ~329 GB
+        output_dir: ${STATE_DIR}/besu          # ~534 GB
       - client: erigon
-        output_dir: ${STATE_DIR}/erigon        # ~319 GB
+        output_dir: ${STATE_DIR}/erigon        # ~517 GB
