@@ -7,7 +7,7 @@ builder:
       ethrex: ghcr.io/ethereum/state-actor-ethrex:pr-117
       reth: ghcr.io/ethereum/state-actor-reth:main
       besu: ghcr.io/ethereum/state-actor-besu:main
-      erigon: ghcr.io/ethereum/state-actor-erigon:main
+      erigon: ghcr.io/ethereum/state-actor-erigon:pr-118
     pull_policy: always
     config:
       seed: 42
