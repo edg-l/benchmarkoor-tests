@@ -26,4 +26,3 @@ runner:
         reth:  ${STATE_DIR}/reth/chainspec.json
         besu: ${STATE_DIR}/besu/besu-chainspec.json
         # erigon: ${STATE_DIR}/erigon/chainspec.json
-        ethrex: ${STATE_DIR}/ethrex/ethrex-genesis.json
