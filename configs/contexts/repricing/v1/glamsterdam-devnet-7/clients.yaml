@@ -301,6 +301,7 @@ runner:
       image: ethpandaops/ethrex:glamsterdam-devnet-7
       genesis_fork_override: { amsterdam: 1 }
       extra_args:
+        - --skip-genesis-validation
         - --no-precompile-cache
 
     # Nimbus
