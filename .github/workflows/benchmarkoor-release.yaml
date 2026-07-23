@@ -63,6 +63,7 @@ jobs:
           BUILD_RUN_ID: ${{ inputs.build-run-id }}
         run: |
           set -euo pipefail
+          echo "Build run ID: $BUILD_RUN_ID"
           PREFIX="benchmarkoor-build-${BUILD_RUN_ID}-"
 
           # Context from the build run's run-name (see benchmarkoor-build.yaml).
