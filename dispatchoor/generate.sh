@@ -41,19 +41,18 @@ get_run_timeout() {
 # step. Matches the workflow's own default.
 BUILD_TIMEOUT=360
 
-# Print the `<client>-bal-full` instance id from clients.yaml, if present.
-# Only the bal-full variant is dispatched; other variants (bal-sequential,
-# bal-nobatchio, bal-full-aot, bare client name, …) are ignored.
-get_bal_full_id() {
+# Print the dispatchable instance ids for a client, in clients.yaml order:
+# `<client>-bal-full` and its AOT twin `<client>-bal-full-aot`, when present.
+# Other variants (bal-sequential, bal-nobatchio, bare client name, …) are ignored.
+get_dispatch_ids() {
   local clients_yaml="$1" client="$2"
   [[ -f "$clients_yaml" ]] || return 0
 
   local id
   while IFS= read -r id; do
-    if [[ "$id" == "${client}-bal-full" ]]; then
-      echo "$id"
-      return 0
-    fi
+    case "$id" in
+      "${client}-bal-full"|"${client}-bal-full-aot") echo "$id" ;;
+    esac
   done < <(sed -nE 's/^[[:space:]]+-[[:space:]]*id:[[:space:]]*([^[:space:]]+).*/\1/p' "$clients_yaml")
 }
 
@@ -83,12 +82,17 @@ for client in "${CLIENTS[@]}"; do
     done
     [[ ${#test_types[@]} -gt 0 ]] || continue
 
-    # Only dispatch the client's bal-full instance; skip subdirs without one.
-    instance_id="$(get_bal_full_id "${subdir_path}/clients.yaml" "$client")"
-    [[ -n "$instance_id" ]] || continue
+    # Dispatch the client's bal-full instance plus its AOT twin; skip subdirs
+    # with neither.
+    instance_ids=()
+    while IFS= read -r found_id; do
+      instance_ids+=("$found_id")
+    done < <(get_dispatch_ids "${subdir_path}/clients.yaml" "$client")
+    [[ ${#instance_ids[@]} -gt 0 ]] || continue
 
     entries+=("# --- Subdir: ${subdir} ---")
 
+    for instance_id in "${instance_ids[@]}"; do
     for test_type in "${test_types[@]}"; do
       test_type_display="$(cap "$test_type")"
       run_timeout="$(get_run_timeout "$client" "$test_type")"
@@ -115,6 +119,7 @@ for client in "${CLIENTS[@]}"; do
     test-type: \"${test_type}\"
     context: \"${CONTEXT}\"
     timeouts: '{\"build\": ${BUILD_TIMEOUT}, \"run\": ${run_timeout}, \"global\": ${global_timeout}}'")
+    done
     done
   done < <(find "${V1_DIR}" -mindepth 1 -maxdepth 1 -type d | sort)
 

@@ -48,6 +48,50 @@
     context: "repricing"
     timeouts: '{"build": 360, "run": 2160, "global": 2520}'
 
+- id: benchmarkoor-besu-repricing-v1-bal-devnet-7-compute-besu-bal-full-aot
+  name: "(Besu) - Repricing - v1/bal-devnet-7 - Compute - besu-bal-full-aot"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "besu"
+    snapshot: "state-actor/v1"
+    subdir: "v1/bal-devnet-7"
+    test-type: "compute"
+    context: "repricing"
+    instance-id: "besu-bal-full-aot"
+  inputs:
+    clients: '["besu"]'
+    instance-id: "besu-bal-full-aot"
+    snapshot: "state-actor/v1"
+    subdir: "v1/bal-devnet-7"
+    test-type: "compute"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 360, "global": 720}'
+
+- id: benchmarkoor-besu-repricing-v1-bal-devnet-7-stateful-besu-bal-full-aot
+  name: "(Besu) - Repricing - v1/bal-devnet-7 - Stateful - besu-bal-full-aot"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "besu"
+    snapshot: "state-actor/v1"
+    subdir: "v1/bal-devnet-7"
+    test-type: "stateful"
+    context: "repricing"
+    instance-id: "besu-bal-full-aot"
+  inputs:
+    clients: '["besu"]'
+    instance-id: "besu-bal-full-aot"
+    snapshot: "state-actor/v1"
+    subdir: "v1/bal-devnet-7"
+    test-type: "stateful"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 2160, "global": 2520}'
+
 # --- Subdir: v1/glamsterdam-devnet-6 ---
 
 - id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-6-compute-besu-bal-full
@@ -94,6 +138,50 @@
     context: "repricing"
     timeouts: '{"build": 360, "run": 2160, "global": 2520}'
 
+- id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-6-compute-besu-bal-full-aot
+  name: "(Besu) - Repricing - v1/glamsterdam-devnet-6 - Compute - besu-bal-full-aot"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "besu"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-6"
+    test-type: "compute"
+    context: "repricing"
+    instance-id: "besu-bal-full-aot"
+  inputs:
+    clients: '["besu"]'
+    instance-id: "besu-bal-full-aot"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-6"
+    test-type: "compute"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 360, "global": 720}'
+
+- id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-6-stateful-besu-bal-full-aot
+  name: "(Besu) - Repricing - v1/glamsterdam-devnet-6 - Stateful - besu-bal-full-aot"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "besu"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-6"
+    test-type: "stateful"
+    context: "repricing"
+    instance-id: "besu-bal-full-aot"
+  inputs:
+    clients: '["besu"]'
+    instance-id: "besu-bal-full-aot"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-6"
+    test-type: "stateful"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 2160, "global": 2520}'
+
 # --- Subdir: v1/glamsterdam-devnet-7 ---
 
 - id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-7-compute-besu-bal-full
@@ -134,6 +222,50 @@
   inputs:
     clients: '["besu"]'
     instance-id: "besu-bal-full"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7"
+    test-type: "stateful"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 2160, "global": 2520}'
+
+- id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-7-compute-besu-bal-full-aot
+  name: "(Besu) - Repricing - v1/glamsterdam-devnet-7 - Compute - besu-bal-full-aot"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "besu"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7"
+    test-type: "compute"
+    context: "repricing"
+    instance-id: "besu-bal-full-aot"
+  inputs:
+    clients: '["besu"]'
+    instance-id: "besu-bal-full-aot"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7"
+    test-type: "compute"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 360, "global": 720}'
+
+- id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-7-stateful-besu-bal-full-aot
+  name: "(Besu) - Repricing - v1/glamsterdam-devnet-7 - Stateful - besu-bal-full-aot"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "besu"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7"
+    test-type: "stateful"
+    context: "repricing"
+    instance-id: "besu-bal-full-aot"
+  inputs:
+    clients: '["besu"]'
+    instance-id: "besu-bal-full-aot"
     snapshot: "state-actor/v1"
     subdir: "v1/glamsterdam-devnet-7"
     test-type: "stateful"
