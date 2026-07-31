@@ -230,6 +230,28 @@
 
 # --- Subdir: v1/glamsterdam-devnet-7-full ---
 
+- id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-7-full-compute-besu-bal-full
+  name: "(Besu) - Repricing - v1/glamsterdam-devnet-7-full - Compute - besu-bal-full"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "besu"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7-full"
+    test-type: "compute"
+    context: "repricing"
+    instance-id: "besu-bal-full"
+  inputs:
+    clients: '["besu"]'
+    instance-id: "besu-bal-full"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7-full"
+    test-type: "compute"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 360, "global": 720}'
+
 - id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-7-full-stateful-besu-bal-full
   name: "(Besu) - Repricing - v1/glamsterdam-devnet-7-full - Stateful - besu-bal-full"
   owner: ethpandaops

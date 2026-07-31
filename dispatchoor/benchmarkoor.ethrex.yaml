@@ -142,6 +142,28 @@
 
 # --- Subdir: v1/glamsterdam-devnet-7-full ---
 
+- id: benchmarkoor-ethrex-repricing-v1-glamsterdam-devnet-7-full-compute-ethrex-bal-full
+  name: "(Ethrex) - Repricing - v1/glamsterdam-devnet-7-full - Compute - ethrex-bal-full"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "ethrex"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7-full"
+    test-type: "compute"
+    context: "repricing"
+    instance-id: "ethrex-bal-full"
+  inputs:
+    clients: '["ethrex"]'
+    instance-id: "ethrex-bal-full"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7-full"
+    test-type: "compute"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 360, "global": 720}'
+
 - id: benchmarkoor-ethrex-repricing-v1-glamsterdam-devnet-7-full-stateful-ethrex-bal-full
   name: "(Ethrex) - Repricing - v1/glamsterdam-devnet-7-full - Stateful - ethrex-bal-full"
   owner: ethpandaops
