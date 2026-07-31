@@ -60,7 +60,8 @@ The only **context** is `repricing` (gas-repricing / EIP-7870 scenarios). A **su
 |--------|-------------|
 | `v1/bal-devnet-7` | BAL devnet-7 variant |
 | `v1/glamsterdam-devnet-6` | Glamsterdam devnet-6 variant |
-| `v1/glamsterdam-devnet-7` | Glamsterdam devnet-7 variant |
+| `v1/glamsterdam-devnet-7` | Glamsterdam devnet-7 variant (`-m repricing` subset, 100M–300M gas sweep) |
+| `v1/glamsterdam-devnet-7-full` | Glamsterdam devnet-7, full suite: no repricing marker, 200M/300M gas only, frozen `benchmarks/amsterdam` EEST ref |
 
 ### Test Types
 
