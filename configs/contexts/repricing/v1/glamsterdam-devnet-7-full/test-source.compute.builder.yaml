@@ -55,6 +55,7 @@ builder:
         # timestamp (0) + 1 via the override flag — same as the runner geth instance.
         filler_extra_args:
           - --override.amsterdam=1
+          - --engine.maxreorgdepth=1024 # Long-chain benchmarks exceed the 512 default
           - --rpc.batch-request-limit=16384 # Default 1000
         output_dir: ${EEST_FIXTURES_DIR}/geth
 

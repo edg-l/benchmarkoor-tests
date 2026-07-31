@@ -33,6 +33,7 @@ builder:
           - --FlatDb.CompactionOffset=0
           - --FlatDb.MinReorgDepth=1024
           - --FlatDb.MaxReorgDepth=1024
+          - --JsonRpc.MaxBatchSize=16384 # Default 1024
           - --Init.AutoDump=None
           - --Merge.NewPayloadBlockProcessingTimeout=70000
           - --Blocks.CachePrecompilesOnBlockProcessing=false
@@ -51,6 +52,8 @@ builder:
         # timestamp (0) + 1 via the override flag — same as the runner geth instance.
         filler_extra_args:
           - --override.amsterdam=1
+          - --engine.maxreorgdepth=1024 # Long-chain benchmarks exceed the 512 default
+          - --rpc.batch-request-limit=16384 # Default 1000
         output_dir: ${EEST_FIXTURES_DIR}/geth
 
       # Besu
@@ -58,6 +61,8 @@ builder:
         filler_client: besu
         filler_image: ethpandaops/besu:glamsterdam-devnet-7-caa5abf
         source_dir: ${STATE_DIR}/besu
+        filler_extra_args:
+          - --rpc-http-max-batch-size=16384 # Default 1024
         # besu reads forks from the geth-format genesis; benchmarkoor patches
         # amsterdamTime in at boot (snapshot block 0 ts is 0, so amsterdam at ts 1).
         genesis: ${STATE_DIR}/besu/besu-chainspec.json
