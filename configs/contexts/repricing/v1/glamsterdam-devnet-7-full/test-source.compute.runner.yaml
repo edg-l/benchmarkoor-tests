@@ -1,0 +1,19 @@
+runner:
+  benchmark:
+    tests:
+      metadata:
+        labels:
+          name: state-actor-glamsterdam-devnet-7-full-compute
+          block: "0"
+          test-type: compute
+          context: repricing
+          fork: amsterdam
+          data-disk-type: schelk
+      source:
+        eest_fixtures:
+          fixtures_url: https://github.com/ethpandaops/benchmarkoor-tests/releases/download/eest-payloads-state-actor-v1-amsterdam-full-compute-178d9f92-20260731/eest-payloads-state-actor-v1-amsterdam-compute-geth.tar.gz
+          fixtures_subdir: benchmarkoor-build-artifacts/eest-payloads/geth/blockchain_tests_stateful_engine
+  container_runtime: podman
+  client:
+    config:
+      rollback_strategy: none
