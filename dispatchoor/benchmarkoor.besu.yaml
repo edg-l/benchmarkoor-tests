@@ -227,3 +227,27 @@
     test-type: "stateful"
     context: "repricing"
     timeouts: '{"build": 360, "run": 2160, "global": 2520}'
+
+# --- Subdir: v1/glamsterdam-devnet-7-full ---
+
+- id: benchmarkoor-besu-repricing-v1-glamsterdam-devnet-7-full-stateful-besu-bal-full
+  name: "(Besu) - Repricing - v1/glamsterdam-devnet-7-full - Stateful - besu-bal-full"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "besu"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7-full"
+    test-type: "stateful"
+    context: "repricing"
+    instance-id: "besu-bal-full"
+  inputs:
+    clients: '["besu"]'
+    instance-id: "besu-bal-full"
+    snapshot: "state-actor/v1"
+    subdir: "v1/glamsterdam-devnet-7-full"
+    test-type: "stateful"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 2160, "global": 2520}'

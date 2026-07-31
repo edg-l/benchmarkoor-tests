@@ -1,0 +1,19 @@
+runner:
+  benchmark:
+    tests:
+      metadata:
+        labels:
+          name: state-actor-glamsterdam-devnet-7-full-stateful
+          block: "0"
+          test-type: stateful
+          context: repricing
+          fork: amsterdam
+          data-disk-type: schelk
+      source:
+        eest_fixtures:
+          fixtures_url: https://github.com/ethpandaops/benchmarkoor-tests/releases/download/eest-payloads-state-actor-v1-amsterdam-full-stateful-178d9f92-20260731/eest-payloads-state-actor-v1-amsterdam-stateful-geth.tar.gz
+          fixtures_subdir: benchmarkoor-build-artifacts/eest-payloads/geth/blockchain_tests_stateful_engine
+  container_runtime: podman
+  client:
+    config:
+      rollback_strategy: container-recreate
