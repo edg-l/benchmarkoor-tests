@@ -18,14 +18,15 @@ runner:
 
     # Besu
     #
-    # Pinned to caa5abf rather than the rolling glamsterdam-devnet-7 tag, which
-    # has moved on to 16c6fae and carries a regression.
+    # Pinned to 3013b7a rather than the rolling glamsterdam-devnet-7 tag. This
+    # build includes the shared-executor fix for BAL state-root computation.
+    # Keep in step with v1/glamsterdam-devnet-7.
     - id: besu-bal-full
       client: besu
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/besu:glamsterdam-devnet-7-caa5abf
+      image: ethpandaops/besu:glamsterdam-devnet-7-3013b7a
       genesis_fork_override: { amsterdam: 1 }
       environment:
         BESU_OPTS: "-Xms8g -Xmx8g -XX:+AlwaysPreTouch"
