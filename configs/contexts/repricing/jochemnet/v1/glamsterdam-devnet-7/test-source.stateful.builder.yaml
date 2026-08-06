@@ -7,22 +7,17 @@ global:
     NETHERMIND_IMAGE: ethpandaops/nethermind:glamsterdam-devnet-7
     GETH_IMAGE: ethpandaops/geth:glamsterdam-devnet-7
 
-    # When amsterdam activates. Deliberately unreachable: blocks advance one
-    # second at a time from the snapshot head (1770454055 = block 24402727), so
-    # the pre-run and the fill both stay on OSAKA for their whole life.
+    # Just after jochemnet's OWN amsterdam activation. The geth genesis in
+    # global.yaml already schedules amsterdamTime 1769856767, and the snapshot
+    # head (block 24402727, ts 1770454055) sits ~6.9 days past it — this chain
+    # is already on amsterdam. Scheduling activation after the head instead
+    # (upstream's example says head_ts + 3) contradicts that history.
     #
-    # The "correct" value is head_ts + 3 (= 1770454058), which crosses into
-    # amsterdam on the third block — two osaka blocks for the funding + EIP-8282
-    # deploy, then the fork. That is what upstream's example tells you to set,
-    # and it FAILS today: EEST switches to engine_newPayloadV5 and sends a nil
-    # slotNumber, which geth rejects ("nil slotnumber post-amsterdam"). The
-    # slot-number logic exists on ethereum/execution-specs@forks/amsterdam but
-    # not on benchmarks/amsterdam, which EEST_REF above is based on.
-    #
-    # So this trades fork coverage for a run that completes: the EIP-8282
-    # predeploy below never gets exercised. Move to head_ts + 3 once EEST_REF
-    # carries the slot-number support.
-    AMSTERDAM_ACTIVATION_TS: "1800000000"
+    # Note the value does NOT decide whether the fill crosses into amsterdam:
+    # fork: amsterdam below makes EEST build amsterdam blocks either way. Runs
+    # 31087806563 (head_ts+3) and 31089586152 (an unreachable 1800000000) both
+    # reached engine_newPayloadV5 and failed identically.
+    AMSTERDAM_ACTIVATION_TS: "1769856769"
 
 builder:
 
