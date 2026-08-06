@@ -33,7 +33,7 @@ on:
       git-ref:
         description: "Git reference to checkout for benchmarkoor"
         required: false
-        default: "feat/builder-pre-runs"
+        default: ""
       build-config:
         description: 'Raw YAML config content to pass via --config (appended after URL config)'
         required: false
