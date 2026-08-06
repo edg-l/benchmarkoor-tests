@@ -79,9 +79,18 @@ jobs:
     runs-on:
       group: gasbenchmark
       labels:
-        - benchmarkoor-builder-jochemnet-geth
-        # Temporary disable to test jochemnet/v1/glamsterdam-devnet-7 stateful fixtures
-        #- benchmarkoor-v1-runner-${{ matrix.client }}
+        # The runner pool follows the subdir, because a build can only run where
+        # its snapshots live: jochemnet subdirs need the jochemnet hosts, every
+        # other subdir stays on the v1 pool. geth's jochemnet snapshot is on one
+        # specific host, so it pins there; other clients take the per-client
+        # label. Keep the jochemnet+geth arm first — the arms are evaluated in
+        # order and the client pin is the more specific match.
+        - >-
+          ${{
+            (contains(inputs.subdir, 'jochemnet') && matrix.client == 'geth' && 'benchmarkoor-v1-jochemnet-runner-benchmark-ci-18') ||
+            (contains(inputs.subdir, 'jochemnet') && format('benchmarkoor-v1-jochemnet-runner-{0}', matrix.client)) ||
+            format('benchmarkoor-v1-runner-{0}', matrix.client)
+          }}
         # Pin each client's build to a specific host. Unlisted clients fall back
         # to their per-client label (harmless duplicate → no host pin).
         #- >-
