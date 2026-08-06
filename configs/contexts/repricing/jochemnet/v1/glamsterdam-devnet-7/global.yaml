@@ -1,0 +1,3 @@
+global:
+  env:
+    EEST_FIXTURES_DIR: /tmp/benchmarkoor/eest-fixtures/glamsterdam-devnet-7

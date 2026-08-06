@@ -1,0 +1,8 @@
+global:
+  env:
+    # Snapshot dirs
+    GETH_SNAPSHOT_DIR: /schelk/snapshots/geth/jochemnet/24402727
+    NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727
+    # Genesis files
+    GETH_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
+    NETHERMIND_CHAINSPEC: https://raw.githubusercontent.com/ethpandaops/perf-devnets/refs/heads/master/network-configs/devnet-3/metadata/chainspec.json
