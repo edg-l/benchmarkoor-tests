@@ -2,7 +2,12 @@ global:
   env:
     # Snapshot dirs
     GETH_SNAPSHOT_DIR: /schelk/snapshots/geth/jochemnet/24402727
-    NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727
+    # The CHAIN COLUMN dir — the one directly containing blocks/, code/, state/,
+    # headers/, flat/ — because benchmarkoor boots nethermind with
+    # --Init.BaseDbPath=/data. Pointing at .../24402727 or .../nethermind_db
+    # instead boots at GENESIS rather than erroring. Note this is the opposite
+    # nesting from GETH_SNAPSHOT_DIR, which wants the datadir containing geth/.
+    NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727/nethermind_db/mainnet
     # Genesis files
     GETH_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
     NETHERMIND_CHAINSPEC: https://raw.githubusercontent.com/ethpandaops/perf-devnets/refs/heads/master/network-configs/devnet-3/metadata/chainspec.json
