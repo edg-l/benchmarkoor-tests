@@ -7,6 +7,16 @@ global:
     NETHERMIND_IMAGE: ethpandaops/nethermind:glamsterdam-devnet-7
     GETH_IMAGE: ethpandaops/geth:glamsterdam-devnet-7
 
+    # When amsterdam activates. MUST be head_ts + 3: the pre-run builds two osaka
+    # blocks (funding + deploy) at head_ts+1 and head_ts+2, then crosses. Too high
+    # and the chain never reaches amsterdam — it fills on osaka and the EIP-8282
+    # predeploy above is pointless; too low and the very first block is already
+    # amsterdam, leaving no osaka window to deploy in.
+    # 1770454055 is block 24402727 (the snapshot dir's block), so +3 = 1770454058.
+    # Re-derive from the running client if the snapshot head ever moves:
+    #   eth_getBlockByNumber("latest").timestamp
+    AMSTERDAM_ACTIVATION_TS: "1770454058"
+
 builder:
 
 ##
@@ -86,7 +96,7 @@ builder:
             address: "0x000064D678505ad48F8cCb093BC65613800E8282" # BUILDER_EXIT_CONTRACT_ADDRESS
             data: "0x89abb1878437213f971f849327423ed1d9c5cdb03970cd8f0000318b3ff101197fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5f556101ca80602d5f395ff33373fffffffffffffffffffffffffffffffffffffffe1460e1575f54807fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff146101c65760015460028111605157506057565b60029003015b601190600182026001905f5b5f821115607e57810190830284830290049160010191906063565b909390049250505036603014609e57366101c657346101c6575f5260205ff35b34106101c657600154600101600155600354806003026004013381556001015f35815560010160203590553360601b5f5260305f60143760445fa0600101600355005b6003546002548082038060101160f5575060105b5f5b81811461012d5782810160030260040181604402815460601b8152601401816001015481526020019060020154905260010160f7565b910180921461013f579060025561014a565b90505f6002555f6003555b36610198575f54600154817fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff146101865760028282011161018e575b50505f6101ba565b01600290036101ba565b7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5b5f555f6001556044025ff35b5f5ffd"
     targets:
-      - name: pre-run-nethermind
+      - name: nethermind
         filler_client: nethermind
         filler_image: ${NETHERMIND_IMAGE}
         source_dir: ${NETHERMIND_SNAPSHOT_DIR}
@@ -104,7 +114,7 @@ builder:
           - --Merge.NewPayloadBlockProcessingTimeout=70000
           - --Blocks.CachePrecompilesOnBlockProcessing=false
 
-      - name: pre-run-geth
+      - name: geth
         filler_client: geth
         filler_image: ${GETH_IMAGE}
         source_dir: ${GETH_SNAPSHOT_DIR}
