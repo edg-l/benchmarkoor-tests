@@ -165,10 +165,10 @@ builder:
           pkey: "0x4da32d29f6dcffa26e09dc4e102033f2d105de1444fb893493ae703289275e0e"
 
     targets:
-      - name: payload-generator-nethermind-stateful
+      - name: nethermind
         filler_client: nethermind
         filler_image: ${NETHERMIND_IMAGE}
-        source_dir: ${SNAPSHOT_DIR}
+        source_dir: ${NETHERMIND_SNAPSHOT_DIR}
         genesis: ${NETHERMIND_CHAINSPEC}
         output_dir: ${EEST_FIXTURES_DIR}/nethermind
         # Same amsterdam schedule as the pre-run so this boot recognises the
@@ -186,7 +186,7 @@ builder:
           - --Merge.NewPayloadBlockProcessingTimeout=70000
           - --Blocks.CachePrecompilesOnBlockProcessing=false
 
-      - name: payload-generator-geth-stateful
+      - name: geth
         filler_client: geth
         filler_image: ${GETH_IMAGE}
         source_dir: ${GETH_SNAPSHOT_DIR}
