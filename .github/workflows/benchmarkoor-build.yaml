@@ -56,9 +56,11 @@ on:
         required: false
         default: "2160"
       image:
-        description: "Benchmarkoor docker image"
+        description: "Benchmarkoor docker image. Empty builds the image locally from git-ref (the action only honours git-ref when this is empty)."
         required: false
-        default: "ghcr.io/ethpandaops/benchmarkoor:master"
+        # Temporary: no image is published for feat/builder-pre-runs, so build
+        # from git-ref locally to get --limit-pre-runs-target.
+        default: ""
       git-ref:
         description: "Git reference to checkout for benchmarkoor"
         required: false
@@ -109,7 +111,9 @@ jobs:
           echo "builder_timeout=$(( ${{ inputs.build-timeout-minutes }} - 30 ))m" >> "$GITHUB_OUTPUT"
 
       - name: Build
-        uses: ethpandaops/benchmarkoor@master
+        # Temporary: the pre-runs archive step (bundle_dir) only exists on this
+        # branch. Back to @master once it merges.
+        uses: ethpandaops/benchmarkoor@feat/builder-pre-runs
         env:
           BENCHMARKOOR_BUILDER_RUN_TIMEOUT: ${{ steps.calc.outputs.builder_timeout }}
         with:
