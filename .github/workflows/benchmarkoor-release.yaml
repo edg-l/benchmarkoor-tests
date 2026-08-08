@@ -357,22 +357,28 @@ jobs:
               echo
               echo "### $client"
               echo
-              echo "#### state-actor"
-              echo "| Field | Value |"
-              echo "|---|---|"
-              echo "| State root | \`$(val "$b" .state_root)\` |"
-              echo "| Accounts created | $(val "$b" .accounts_created) |"
-              echo "| Contracts created | $(val "$b" .contracts_created) |"
-              echo "| Storage slots | $(val "$b" .storage_slots) |"
-              echo "| DB size | $(hbytes "$(jq -r '.db_size_bytes // empty' <<<"$b")") |"
-              echo "| Chain ID | $(val "$b" .chain_id) |"
-              echo "| Block gas limit | $(val "$b" .gas_limit) |"
-              echo "| Seed | $(val "$b" .seed) |"
-              echo "| Target size | $(val "$b" .target_size) |"
-              echo "| Baseline fork | \`$(val "$b" .snapshot_baseline_fork)\` |"
-              echo "| state-actor version | \`$(val "$b" .state_actor_version)\` |"
-              echo "| Image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
-              echo
+              # Only snapshots built by the state_actor builder ship a
+              # state-actor-manifest.json. A pre_runs build (an existing chain
+              # advanced in place) has none, and every field below would render
+              # as "—", so skip the whole table rather than print an empty one.
+              if [ "$(jq -r '[.state_root, .accounts_created, .contracts_created, .storage_slots, .db_size_bytes, .chain_id, .gas_limit, .seed, .target_size, .snapshot_baseline_fork, .state_actor_version, .state_actor_image] | map(select(. != null)) | length' <<<"$b")" -gt 0 ]; then
+                echo "#### state-actor"
+                echo "| Field | Value |"
+                echo "|---|---|"
+                echo "| State root | \`$(val "$b" .state_root)\` |"
+                echo "| Accounts created | $(val "$b" .accounts_created) |"
+                echo "| Contracts created | $(val "$b" .contracts_created) |"
+                echo "| Storage slots | $(val "$b" .storage_slots) |"
+                echo "| DB size | $(hbytes "$(jq -r '.db_size_bytes // empty' <<<"$b")") |"
+                echo "| Chain ID | $(val "$b" .chain_id) |"
+                echo "| Block gas limit | $(val "$b" .gas_limit) |"
+                echo "| Seed | $(val "$b" .seed) |"
+                echo "| Target size | $(val "$b" .target_size) |"
+                echo "| Baseline fork | \`$(val "$b" .snapshot_baseline_fork)\` |"
+                echo "| state-actor version | \`$(val "$b" .state_actor_version)\` |"
+                echo "| Image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
+                echo
+              fi
               echo "#### eest tests / benchmarks"
               echo "| Field | Value |"
               echo "|---|---|"
