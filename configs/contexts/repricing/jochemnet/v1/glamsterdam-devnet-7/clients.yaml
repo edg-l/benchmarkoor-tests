@@ -13,7 +13,7 @@ runner:
       image: ethpandaops/geth:glamsterdam-devnet-7
       extra_args:
         - --engine.maxreorgdepth=1024
-        - --override.amsterdam=1
+        - --override.amsterdam=${AMSTERDAM_ACTIVATION_TS}
         - --debug.logslowblock=0
 
     # Besu
@@ -29,7 +29,8 @@ runner:
         labels:
           bal-mode: full
       image: ethpandaops/besu:glamsterdam-devnet-7-3013b7a
-      genesis_fork_override: { amsterdam: 1 }
+      genesis_fork_override:
+        amsterdam: ${AMSTERDAM_ACTIVATION_TS}
       environment:
         BESU_OPTS: "-Xms8g -Xmx8g -XX:+AlwaysPreTouch"
       extra_args:
@@ -59,7 +60,8 @@ runner:
           bal-mode: full
           aot: "true"
       image: ethpandaops/besu:glamsterdam-devnet-7-aot-3013b7a
-      genesis_fork_override: { amsterdam: 1 }
+      genesis_fork_override:
+        amsterdam: ${AMSTERDAM_ACTIVATION_TS}
       environment:
         BESU_OPTS: "-Xms8g -Xmx8g -XX:+AlwaysPreTouch -XX:AOTCache=/opt/besu/aot/besu.aot -XX:AOTMode=on -Xlog:aot=info"
       extra_args:
@@ -80,7 +82,8 @@ runner:
         labels:
           bal-mode: full
       image: ethpandaops/reth:glamsterdam-devnet-7
-      genesis_fork_override: { amsterdam: 1 }
+      genesis_fork_override:
+        amsterdam: ${AMSTERDAM_ACTIVATION_TS}
       extra_args:
         - --engine.slow-block-threshold=0
       retry_new_payloads_failed_state:
@@ -95,7 +98,9 @@ runner:
         labels:
           bal-mode: full
       image:  nethermindeth/nethermind:master
-      genesis_eip_override: { timestamp: 1, eips: [2780, 7708, 7778, 7843, 7928, 7954, 7976, 7981, 7997, 8024, 8037, 8038, 8246, 8282] }
+      genesis_eip_override:
+        timestamp: ${AMSTERDAM_ACTIVATION_TS}
+        eips: [2780, 7708, 7778, 7843, 7928, 7954, 7976, 7981, 7997, 8024, 8037, 8038, 8246, 8282]
       extra_args:
         - --Init.BaseDbPath=/data
         - --FlatDb.Enabled=true
@@ -121,7 +126,7 @@ runner:
           bal-mode: full
       image: ethpandaops/erigon:glamsterdam-devnet-7
       extra_args:
-        - --override.amsterdam=1
+        - --override.amsterdam=${AMSTERDAM_ACTIVATION_TS}
         - --fcu.background.commit=false
         - --exec.no-merge=true
         - --exec.no-prune=true
@@ -139,7 +144,8 @@ runner:
         labels:
           bal-mode: full
       image: ethpandaops/ethrex:glamsterdam-devnet-7
-      genesis_fork_override: { amsterdam: 1 }
+      genesis_fork_override:
+        amsterdam: ${AMSTERDAM_ACTIVATION_TS}
       extra_args:
         - --skip-genesis-validation
         - --no-precompile-cache
@@ -151,4 +157,5 @@ runner:
         labels:
           bal-mode: full
       image: ethpandaops/nimbus-eth1:glamsterdam-devnet-7
-      genesis_fork_override: { amsterdam: 1 }
+      genesis_fork_override:
+        amsterdam: ${AMSTERDAM_ACTIVATION_TS}

@@ -11,3 +11,22 @@ global:
     # Genesis files
     GETH_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
     NETHERMIND_CHAINSPEC: https://raw.githubusercontent.com/ethpandaops/perf-devnets/refs/heads/master/network-configs/devnet-3/metadata/chainspec.json
+
+    # When amsterdam activates, just after jochemnet's OWN activation: the geth
+    # genesis above already schedules amsterdamTime 1769856767, and the snapshot
+    # head (block 24402727, ts 1770454055) sits ~6.9 days past it, so this chain
+    # is already on amsterdam. Scheduling activation after the head instead
+    # (upstream's example says head_ts + 3) contradicts that history, and a
+    # state-actor-style activation at 1 claims the whole mainnet history was
+    # amsterdam.
+    #
+    # The value does NOT decide whether a fill crosses into amsterdam — the
+    # builder's `fork: amsterdam` makes EEST build amsterdam blocks either way.
+    # Runs 31087806563 (head_ts+3) and 31089586152 (an unreachable 1800000000)
+    # both reached engine_newPayloadV5 and failed identically; 31133523115 went
+    # green on the value below.
+    #
+    # Lives here, in the datadir global, because BOTH benchmarkoor-build.yaml
+    # and benchmarkoor-run.yaml load this file — the build and the run have to
+    # agree on the schedule of the datadir they share.
+    AMSTERDAM_ACTIVATION_TS: "1769856769"
