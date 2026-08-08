@@ -17,6 +17,7 @@ on:
         type: choice
         options:
           - "state-actor/v1"
+          - "jochemnet/v1"
       context:
         description: "Test context"
         required: false
@@ -29,10 +30,13 @@ on:
         required: true
         type: choice
         options:
+          # State actor
           - "v1/bal-devnet-7"
           - "v1/glamsterdam-devnet-6"
           - "v1/glamsterdam-devnet-7"
           - "v1/glamsterdam-devnet-7-full"
+          # Jochemnet
+          - "jochemnet/v1/glamsterdam-devnet-7"
       test-type:
         description: "Test type to run"
         required: false
