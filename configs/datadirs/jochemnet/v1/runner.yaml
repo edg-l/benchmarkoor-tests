@@ -4,21 +4,33 @@ runner:
       besu:
         source_dir: ${BESU_SNAPSHOT_DIR}
         method: schelk
+        schelk_options:
+          promote_post_pre_runs: true
       geth:
         source_dir: ${GETH_SNAPSHOT_DIR}
         method: schelk
+        schelk_options:
+          promote_post_pre_runs: true
       nethermind:
         source_dir: ${NETHERMIND_SNAPSHOT_DIR}
         method: schelk
+        schelk_options:
+          promote_post_pre_runs: true
       reth:
         source_dir: ${RETH_SNAPSHOT_DIR}
         method: schelk
+        schelk_options:
+          promote_post_pre_runs: true
       erigon:
         source_dir: ${ERIGON_SNAPSHOT_DIR}
         method: schelk
+        schelk_options:
+          promote_post_pre_runs: true
       ethrex:
         source_dir: ${ETHREX_SNAPSHOT_DIR}
         method: schelk
+        schelk_options:
+          promote_post_pre_runs: true
     config:
       genesis:
         nethermind: ${NETHERMIND_CHAINSPEC}
