@@ -7,9 +7,9 @@ global:
     NETHERMIND_IMAGE: ethpandaops/nethermind:glamsterdam-devnet-7
     GETH_IMAGE: ethpandaops/geth:glamsterdam-devnet-7
 
-    # AMSTERDAM_ACTIVATION_TS is defined in configs/datadirs/jochemnet/v1/global.yaml
-    # so the build and the run share one schedule for the datadir they pass
-    # between them.
+    # AMSTERDAM_ACTIVATION_TS is defined in this context's global.yaml so the
+    # build and the run share one schedule for the datadir they pass between
+    # them.
 
 builder:
 
