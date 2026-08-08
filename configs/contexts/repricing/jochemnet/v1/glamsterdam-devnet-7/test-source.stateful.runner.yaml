@@ -1,0 +1,20 @@
+runner:
+  benchmark:
+    tests:
+      metadata:
+        labels:
+          name: jochemnet-glamsterdam-devnet-7-stateful
+          block: "24402727"
+          test-type: stateful
+          context: repricing
+          fork: amsterdam
+          data-disk-type: schelk
+      source:
+        eest_fixtures:
+          # TODO: Needs update once we have a release for jochemnet stateful payloads. We should also have the pre_runs configured here.
+          #fixtures_url: https://github.com/ethpandaops/benchmarkoor-tests/releases/download/eest-payloads-jochemnet-v1-amsterdam-stateful-2282c757-20260722-144218/eest-payloads-jochemnet-v1-amsterdam-stateful-geth.tar.gz
+          #fixtures_subdir: benchmarkoor-build-artifacts/eest-payloads/geth/blockchain_tests_stateful_engine
+  container_runtime: podman
+  client:
+    config:
+      rollback_strategy: container-recreate
