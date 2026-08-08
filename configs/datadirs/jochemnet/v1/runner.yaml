@@ -1,10 +1,5 @@
 runner:
   client:
-    # Each client boots on the jochemnet snapshot for its own layout — see the
-    # per-client *_SNAPSHOT_DIR in global.yaml, which is also what the build
-    # stages advance. A STATE_DIR/<client> root was the state-actor arrangement,
-    # where the builder generates a datadir per client under one root; an
-    # existing network's snapshots are not laid out that way.
     datadirs:
       besu:
         source_dir: ${BESU_SNAPSHOT_DIR}
