@@ -68,7 +68,15 @@ jobs:
     runs-on:
       group: gasbenchmark
       labels:
-        - benchmarkoor-v1-runner-${{ matrix.client }}
+        # The runner pool follows the subdir, because a run can only happen where
+        # its datadirs live: jochemnet subdirs need the jochemnet hosts, every
+        # other subdir stays on the v1 pool. Mirrors benchmarkoor-build.yaml.
+        - >-
+          ${{
+            contains(inputs.subdir, 'jochemnet')
+              && format('benchmarkoor-v1-jochemnet-runner-{0}', matrix.client)
+              || format('benchmarkoor-v1-runner-{0}', matrix.client)
+          }}
     # Whole-job cap; each phase also has its own step-level timeout below
     # (both read from the timeouts JSON input). Keep global >= build + run.
     timeout-minutes: ${{ fromJSON(inputs.timeouts).global }}
