@@ -15,16 +15,6 @@ runner:
           # failures) by benchmarkoor-release. EEST d9ad55b3, 100-300 Mgas.
           fixtures_url: https://github.com/ethpandaops/benchmarkoor-tests/releases/download/eest-payloads-jochemnet-v1-amsterdam-stateful-d9ad55b3-20260807-000744/eest-payloads-jochemnet-v1-amsterdam-stateful-geth.tar.gz
           fixtures_subdir: benchmarkoor-build-artifacts/eest-payloads/geth/blockchain_tests_stateful_engine
-          # The pre-run bundle rides along in the same tarball, so it needs no
-          # second download — the runner resolves this subdir against the
-          # artifact it already extracted for the fixtures above.
-          #
-          # It replays before the benchmarks: the datadirs are method: schelk,
-          # which restores the scratch to the virgin snapshot head — the state
-          # this bundle was recorded against — and the replay then rebuilds the
-          # setup chain (blocks 24402727 -> 24410463) the fixtures anchor to.
-          # Switching a datadir to method: direct means the datadir is already
-          # advanced, and this block has to go with it.
           pre_runs:
             fixtures_subdir: benchmarkoor-build-artifacts/pre-runs/geth/pre_run_bundle
   container_runtime: podman
