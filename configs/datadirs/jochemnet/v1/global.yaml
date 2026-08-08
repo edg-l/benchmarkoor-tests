@@ -2,19 +2,7 @@ global:
   env:
     # Snapshot dirs
     GETH_SNAPSHOT_DIR: /schelk/snapshots/geth/jochemnet/24402727
-    # The CHAIN COLUMN dir — the one directly containing blocks/, code/, state/,
-    # headers/, flat/ — because benchmarkoor boots nethermind with
-    # --Init.BaseDbPath=/data. Pointing at .../24402727 or .../nethermind_db
-    # instead boots at GENESIS rather than erroring. Note this is the opposite
-    # nesting from GETH_SNAPSHOT_DIR, which wants the datadir containing geth/.
-    NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727/nethermind_db/mainnet
-    # UNVERIFIED. Only the geth snapshot has been booted on jochemnet so far, so
-    # these follow the base layout /schelk/snapshots/<client>/jochemnet/<block>
-    # without a per-client tail. Whether that is the level a given client wants
-    # is exactly what differs between the two above — geth takes the directory
-    # containing geth/, nethermind the chain column dir two levels deeper. Check
-    # each against its client before trusting a run: pointing at the wrong level
-    # boots at GENESIS instead of erroring.
+    NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727
     BESU_SNAPSHOT_DIR: /schelk/snapshots/besu/jochemnet/24402727
     RETH_SNAPSHOT_DIR: /schelk/snapshots/reth/jochemnet/24402727
     ERIGON_SNAPSHOT_DIR: /schelk/snapshots/erigon/jochemnet/24402727
