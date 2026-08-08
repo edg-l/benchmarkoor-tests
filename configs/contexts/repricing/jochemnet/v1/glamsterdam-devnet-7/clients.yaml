@@ -136,6 +136,16 @@ runner:
         enabled: true
         max_retries: 120
         backoff: 30s
+      # erigon answers newPayload with SYNCING while it is still processing, and
+      # the pre-run replay treats a non-VALID status as a failure — it died on
+      # the same payload (line 10003) on both attempts. Retry SYNCING rather
+      # than the failed-state path; the two are separate settings and SYNCING
+      # takes this one. Bounded at 30s per payload so a genuinely stuck client
+      # still fails instead of stalling a ~15k-payload replay.
+      retry_new_payloads_syncing_state:
+        enabled: true
+        max_retries: 30
+        backoff: 1s
 
     # Ethrex
     - id: ethrex-bal-full
