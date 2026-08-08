@@ -2,7 +2,12 @@ global:
   env:
     # Snapshot dirs
     GETH_SNAPSHOT_DIR: /schelk/snapshots/geth/jochemnet/24402727
-    NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727
+    # The CHAIN COLUMN dir, not the block dir: nethermind boots with
+    # --Init.BaseDbPath=/data and reads the columns directly under it. The
+    # two are a pair — the shallower path boots at MAINNET GENESIS instead
+    # of erroring (runs 31275174347, 31275391539: 1 test, genesis hash),
+    # where this one loaded the chain and benchmarked (run 31274385336).
+    NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727/nethermind_db/mainnet
     BESU_SNAPSHOT_DIR: /schelk/snapshots/besu/jochemnet/24402727
     RETH_SNAPSHOT_DIR: /schelk/snapshots/reth/jochemnet/24402727
     ERIGON_SNAPSHOT_DIR: /schelk/snapshots/erigon/jochemnet/24402727
