@@ -104,7 +104,12 @@ jobs:
           echo "builder_timeout=$(( ${{ fromJSON(inputs.timeouts).build }} - 30 ))m" >> "$GITHUB_OUTPUT"
           echo "runner_timeout=$(( ${{ fromJSON(inputs.timeouts).run }} - 30 ))m" >> "$GITHUB_OUTPUT"
 
+      # Only for snapshots state_actor synthesises. jochemnet is an existing
+      # network whose datadir is already on the host, so its datadirs
+      # builder.yaml declares no builders and this step fails outright with
+      # "no builders configured; nothing to build".
       - name: Build state-actor data directory
+        if: ${{ !contains(inputs.snapshot, 'jochemnet') }}
         timeout-minutes: ${{ fromJSON(inputs.timeouts).build }}
         uses: ethpandaops/benchmarkoor@master
         env:
