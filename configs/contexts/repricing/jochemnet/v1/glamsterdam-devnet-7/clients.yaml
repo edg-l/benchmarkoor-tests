@@ -145,7 +145,7 @@ runner:
       # rather than stalling a ~15k-payload replay forever.
       retry_new_payloads_syncing_state:
         enabled: true
-        max_retries: 60
+        max_retries: 240
         backoff: 30s
 
     # Ethrex
