@@ -347,6 +347,18 @@ jobs:
           hbytes() { [ -n "${1:-}" ] && [ "$1" != "null" ] && numfmt --to=iec --suffix=B "$1" 2>/dev/null || echo "—"; }
           val() { local v; v=$(jq -r "$2 // empty" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
           arr() { local v; v=$(jq -r "($2 // []) | map(tostring) | join(\", \")" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
+
+          # What an asset holds depends on which builder produced the snapshot:
+          # state_actor ships its manifest, pre_runs ships the replay bundle (and
+          # only when the target set a bundle_dir). Describe what is actually in
+          # there rather than naming a file that may not exist.
+          CONTENTS='`eest-payloads/<client>/…` fixtures'
+          if jq -e '[.assets[].build.state_root // empty] | length > 0' manifest.json >/dev/null 2>&1; then
+            CONTENTS="$CONTENTS, \`state-actor/<client>/state-actor-manifest.json\`"
+          fi
+          if jq -e '[.assets[].build.prerun_payloads // empty] | length > 0' manifest.json >/dev/null 2>&1; then
+            CONTENTS="$CONTENTS, \`pre-runs/<client>/pre_run_bundle/\`"
+          fi
           {
             echo "## EEST $TEST_TYPE payloads"
             echo
@@ -358,7 +370,7 @@ jobs:
             echo "| EEST commit | \`$EEST_SHA\` |"
             echo "| Promoted from build run | [\`$BUILD_RUN_ID\`](https://github.com/$REPO/actions/runs/$BUILD_RUN_ID) |"
             echo
-            echo "Each \`*.tar.gz\` contains \`eest-payloads/<client>/…\` fixtures and \`state-actor/<client>/state-actor-manifest.json\`."
+            echo "Each \`*.tar.gz\` contains $CONTENTS."
             echo "Assets over 2 GB are split into \`.part-NNN\` files — use \`download.sh\` (fetches, reassembles, verifies against \`SHA256SUMS\`), or see \`manifest.json\`."
             echo
             echo "## Build details"
