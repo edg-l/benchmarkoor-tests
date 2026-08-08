@@ -182,18 +182,24 @@ jobs:
           mkdir meta
           tar -xzf "$ASSET" -C meta --wildcards \
             '*/state-actor-manifest.json' '*/.benchmarkoor-fill.json' \
-            '*/.benchmarkoor-build.json' '*/.benchmarkoor-pytest-report.json' 2>/dev/null || true
+            '*/.benchmarkoor-build.json' '*/.benchmarkoor-pytest-report.json' \
+            '*/pre-run.meta.json' 2>/dev/null || true
           SA=$(find meta -name state-actor-manifest.json | head -1)
           FILL=$(find meta -name .benchmarkoor-fill.json | head -1)
           BUILD=$(find meta -path '*eest-payloads*' -name .benchmarkoor-build.json | head -1)
           PYTEST=$(find meta -name .benchmarkoor-pytest-report.json | head -1)
+          # Present only when the pre_runs target set bundle_dir — the action
+          # archives the whole pre_run_bundle/ directory, this file included.
+          PRERUN=$(find meta -name pre-run.meta.json | head -1)
           jq -n --arg client "$CLIENT" \
             --slurpfile sa "${SA:-/dev/null}" --slurpfile fill "${FILL:-/dev/null}" \
             --slurpfile build "${BUILD:-/dev/null}" --slurpfile pytest "${PYTEST:-/dev/null}" \
+            --slurpfile prerun "${PRERUN:-/dev/null}" \
             '{client:$client,
               state_actor:($sa[0] // {}),
               eest_fill:($fill[0] // {}),
               build_inputs:(($build[0] // {}).inputs // {}),
+              pre_run:($prerun[0] // {}),
               pytest:(($pytest[0] // {}) | {summary, duration, exitcode, created})}' \
             > "${CLIENT}.meta.json"
 
@@ -298,6 +304,11 @@ jobs:
                 marker: .build_inputs.marker,
                 tests: .build_inputs.tests,
                 genesis_eips: (.build_inputs.genesis_eip_override.EIPs // .build_inputs.genesis_eip_override.eips),
+                prerun_payloads: .pre_run.payloads,
+                prerun_start_block: .pre_run.start_block_number,
+                prerun_start_hash: .pre_run.start_block_hash,
+                prerun_end_block: .pre_run.end_block_number,
+                prerun_end_hash: .pre_run.end_block_hash,
                 pytest_passed: .pytest.summary.passed,
                 pytest_total: .pytest.summary.total
               }' "$META_DIR/${client}.meta.json" 2>/dev/null || echo '{}')
@@ -377,6 +388,26 @@ jobs:
                 echo "| Baseline fork | \`$(val "$b" .snapshot_baseline_fork)\` |"
                 echo "| state-actor version | \`$(val "$b" .state_actor_version)\` |"
                 echo "| Image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
+                echo
+              fi
+              # A pre_runs build advances an existing chain instead of
+              # synthesising one; its bundle metadata is what describes the work,
+              # so it stands in for the state-actor table above. Absent unless
+              # the target set bundle_dir.
+              if [ "$(jq -r '.prerun_payloads // "null"' <<<"$b")" != "null" ]; then
+                ps=$(jq -r '.prerun_start_block' <<<"$b")
+                pe=$(jq -r '.prerun_end_block' <<<"$b")
+                pc=$(jq -r '.prerun_payloads' <<<"$b")
+                # Contiguous means every block in (start, end] has exactly one
+                # payload; a mismatch means the bundle has gaps or duplicates.
+                if [ "$pc" -eq "$((pe - ps))" ]; then contig="yes"; else contig="no — $pc payloads over $((pe - ps)) blocks"; fi
+                echo "#### pre-run"
+                echo "| Field | Value |"
+                echo "|---|---|"
+                echo "| Start block | $ps (\`$(val "$b" .prerun_start_hash)\`) |"
+                echo "| End block | $pe (\`$(val "$b" .prerun_end_hash)\`) |"
+                echo "| Payloads | $pc |"
+                echo "| Contiguous | $contig |"
                 echo
               fi
               echo "#### eest tests / benchmarks"
