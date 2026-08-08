@@ -60,6 +60,14 @@ runner:
           bal-mode: full
           aot: "true"
       image: ethpandaops/besu:glamsterdam-devnet-7-aot-3013b7a
+      # Same schelk volume as besu-bal-full, minus that datadir's
+      # promote_post_pre_runs — only one instance may promote a shared volume,
+      # and besu is the one client here running two. besu-bal-full runs first
+      # and promotes; this twin then restores from the promoted baseline, so
+      # its own replay finds the blocks already applied and is a no-op.
+      datadir:
+        source_dir: ${BESU_SNAPSHOT_DIR}
+        method: schelk
       genesis_fork_override:
         amsterdam: ${AMSTERDAM_ACTIVATION_TS}
       environment:
