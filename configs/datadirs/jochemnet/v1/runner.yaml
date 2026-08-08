@@ -1,23 +1,28 @@
 runner:
   client:
+    # Each client boots on the jochemnet snapshot for its own layout — see the
+    # per-client *_SNAPSHOT_DIR in global.yaml, which is also what the build
+    # stages advance. A STATE_DIR/<client> root was the state-actor arrangement,
+    # where the builder generates a datadir per client under one root; an
+    # existing network's snapshots are not laid out that way.
     datadirs:
       besu:
-        source_dir: ${STATE_DIR}/besu
+        source_dir: ${BESU_SNAPSHOT_DIR}
         method: schelk
       geth:
-        source_dir: ${STATE_DIR}/geth
+        source_dir: ${GETH_SNAPSHOT_DIR}
         method: schelk
       nethermind:
-        source_dir: ${STATE_DIR}/nethermind
+        source_dir: ${NETHERMIND_SNAPSHOT_DIR}
         method: schelk
       reth:
-        source_dir: ${STATE_DIR}/reth
+        source_dir: ${RETH_SNAPSHOT_DIR}
         method: schelk
       erigon:
-        source_dir: ${STATE_DIR}/erigon
+        source_dir: ${ERIGON_SNAPSHOT_DIR}
         method: schelk
       ethrex:
-        source_dir: ${STATE_DIR}/ethrex
+        source_dir: ${ETHREX_SNAPSHOT_DIR}
         method: schelk
     config:
       genesis:

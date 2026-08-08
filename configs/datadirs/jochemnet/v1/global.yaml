@@ -8,6 +8,17 @@ global:
     # instead boots at GENESIS rather than erroring. Note this is the opposite
     # nesting from GETH_SNAPSHOT_DIR, which wants the datadir containing geth/.
     NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727/nethermind_db/mainnet
+    # UNVERIFIED. Only the geth snapshot has been booted on jochemnet so far, so
+    # these follow the base layout /schelk/snapshots/<client>/jochemnet/<block>
+    # without a per-client tail. Whether that is the level a given client wants
+    # is exactly what differs between the two above — geth takes the directory
+    # containing geth/, nethermind the chain column dir two levels deeper. Check
+    # each against its client before trusting a run: pointing at the wrong level
+    # boots at GENESIS instead of erroring.
+    BESU_SNAPSHOT_DIR: /schelk/snapshots/besu/jochemnet/24402727
+    RETH_SNAPSHOT_DIR: /schelk/snapshots/reth/jochemnet/24402727
+    ERIGON_SNAPSHOT_DIR: /schelk/snapshots/erigon/jochemnet/24402727
+    ETHREX_SNAPSHOT_DIR: /schelk/snapshots/ethrex/jochemnet/24402727
     # Genesis files
     GETH_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
     NETHERMIND_CHAINSPEC: https://raw.githubusercontent.com/ethpandaops/perf-devnets/refs/heads/master/network-configs/devnet-3/metadata/chainspec.json
