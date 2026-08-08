@@ -140,12 +140,13 @@ runner:
       # the pre-run replay treats a non-VALID status as a failure — it died on
       # the same payload (line 10003) on both attempts. Retry SYNCING rather
       # than the failed-state path; the two are separate settings and SYNCING
-      # takes this one. Bounded at 30s per payload so a genuinely stuck client
-      # still fails instead of stalling a ~15k-payload replay.
+      # takes this one. Same generous budget as bootstrap_fcu above — erigon
+      # can be slow to settle — but still bounded, so a stuck client fails
+      # rather than stalling a ~15k-payload replay forever.
       retry_new_payloads_syncing_state:
         enabled: true
-        max_retries: 30
-        backoff: 1s
+        max_retries: 60
+        backoff: 30s
 
     # Ethrex
     - id: ethrex-bal-full
