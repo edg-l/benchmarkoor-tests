@@ -11,9 +11,11 @@ runner:
           data-disk-type: schelk
       source:
         eest_fixtures:
-          # TODO: Needs update once we have a release for jochemnet stateful payloads. We should also have the pre_runs configured here.
-          #fixtures_url: https://github.com/ethpandaops/benchmarkoor-tests/releases/download/eest-payloads-jochemnet-v1-amsterdam-stateful-2282c757-20260722-144218/eest-payloads-jochemnet-v1-amsterdam-stateful-geth.tar.gz
-          #fixtures_subdir: benchmarkoor-build-artifacts/eest-payloads/geth/blockchain_tests_stateful_engine
+          # Promoted from build run 31133523115 (geth, 1463 benchmarks, 0
+          # failures) by benchmarkoor-release. EEST d9ad55b3, 100-300 Mgas.
+          # TODO: the pre_runs should be configured here too.
+          fixtures_url: https://github.com/ethpandaops/benchmarkoor-tests/releases/download/eest-payloads-jochemnet-v1-amsterdam-stateful-d9ad55b3-20260807-000744/eest-payloads-jochemnet-v1-amsterdam-stateful-geth.tar.gz
+          fixtures_subdir: benchmarkoor-build-artifacts/eest-payloads/geth/blockchain_tests_stateful_engine
   container_runtime: podman
   client:
     config:
