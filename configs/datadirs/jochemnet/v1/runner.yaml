@@ -21,8 +21,9 @@ runner:
         method: schelk
     config:
       genesis:
-        nethermind: ${STATE_DIR}/nethermind/parity-chainspec.json
-        ethrex: ${STATE_DIR}/ethrex/ethrex-genesis.json
-        reth:  ${STATE_DIR}/reth/chainspec.json
-        besu: ${STATE_DIR}/besu/besu-chainspec.json
-        erigon: ${STATE_DIR}/erigon/chainspec.json
+        nethermind: ${NETHERMIND_CHAINSPEC}
+        ethrex: ${ETHREX_GENESIS}
+        reth:  ${RETH_GENESIS}
+        besu: ${BESU_GENESIS}
+        erigon: ${ERIGON_GENESIS}
+        geth: ${GETH_GENESIS}
