@@ -1,0 +1,27 @@
+# AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
+# Regenerate with: make config (or ./dispatchoor/generate.sh)
+# Source: configs/contexts/repricing/jochemnet/v1/<subdir>/
+
+# --- Subdir: jochemnet/v1/glamsterdam-devnet-7 ---
+
+- id: benchmarkoor-ethrex-repricing-jochemnet-v1-glamsterdam-devnet-7-stateful-ethrex-bal-full
+  name: "(Ethrex) - Repricing - jochemnet/v1/glamsterdam-devnet-7 - Stateful - ethrex-bal-full"
+  owner: ethpandaops
+  repo: benchmarkoor-tests
+  workflow_id: benchmarkoor-run.yaml
+  ref: master
+  labels:
+    el-client: "ethrex"
+    snapshot: "jochemnet/v1"
+    subdir: "jochemnet/v1/glamsterdam-devnet-7"
+    test-type: "stateful"
+    context: "repricing"
+    instance-id: "ethrex-bal-full"
+  inputs:
+    clients: '["ethrex"]'
+    instance-id: "ethrex-bal-full"
+    snapshot: "jochemnet/v1"
+    subdir: "jochemnet/v1/glamsterdam-devnet-7"
+    test-type: "stateful"
+    context: "repricing"
+    timeouts: '{"build": 360, "run": 2160, "global": 2520}'

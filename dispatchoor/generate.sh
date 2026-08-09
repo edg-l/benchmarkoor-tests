@@ -5,13 +5,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CONTEXTS_DIR="${REPO_ROOT}/configs/contexts"
 
-# Only the repricing/v1/* contexts are dispatched. Each subdir there maps to a
-# benchmarkoor-run.yaml dispatch with context=repricing, subdir=v1/<name>,
-# snapshot=state-actor/v1.
+# Each family is a contexts directory whose subdirs map to benchmarkoor-run.yaml
+# dispatches, all with context=repricing. They differ in which snapshot they run
+# against, how the subdir input is spelled, and which files they land in:
+#
+#   contexts/repricing/v1/<name>            → snapshot=state-actor/v1, subdir=v1/<name>
+#   contexts/repricing/jochemnet/v1/<name>  → snapshot=jochemnet/v1,   subdir=jochemnet/v1/<name>
+#
+# Fields: <dir>|<snapshot>|<subdir-prefix>|<file-infix>
+# The file infix keeps the families in separate files — state-actor stays on the
+# historical benchmarkoor.<client>.yaml names, jochemnet gets
+# benchmarkoor.jochemnet.<client>.yaml — because both have a
+# glamsterdam-devnet-7 subdir and would otherwise collide.
 CONTEXT="repricing"
 VERSION="v1"
-SNAPSHOT="state-actor/${VERSION}"
-V1_DIR="${CONTEXTS_DIR}/${CONTEXT}/${VERSION}"
+
+FAMILIES=(
+  "${CONTEXTS_DIR}/${CONTEXT}/${VERSION}|state-actor/${VERSION}|${VERSION}|"
+  "${CONTEXTS_DIR}/${CONTEXT}/jochemnet/${VERSION}|jochemnet/${VERSION}|jochemnet/${VERSION}|jochemnet."
+)
 
 CLIENTS=(geth erigon nethermind besu reth ethrex)
 
@@ -58,8 +70,18 @@ get_dispatch_ids() {
 
 context_display="$(cap "$CONTEXT")"
 
+for family in "${FAMILIES[@]}"; do
+  IFS='|' read -r family_dir SNAPSHOT subdir_prefix file_infix <<<"$family"
+
+  [[ -d "$family_dir" ]] || { echo "Skipping missing ${family_dir}"; continue; }
+
+  # Entry ids must stay unique across families, which share subdir names. The
+  # subdir prefix is what distinguishes them, so slug it into the id:
+  # v1 → "v1", jochemnet/v1 → "jochemnet-v1". state-actor's ids are unchanged.
+  subdir_slug="${subdir_prefix//\//-}"
+
 for client in "${CLIENTS[@]}"; do
-  outfile="${SCRIPT_DIR}/benchmarkoor.${client}.yaml"
+  outfile="${SCRIPT_DIR}/benchmarkoor.${file_infix}${client}.yaml"
   client_display="$(cap "$client")"
 
   entries=()
@@ -68,7 +90,7 @@ for client in "${CLIENTS[@]}"; do
     [[ -e "${subdir_path}/.dispatchoor_ignore" ]] && continue
 
     name="$(basename "$subdir_path")"
-    subdir="${VERSION}/${name}"
+    subdir="${subdir_prefix}/${name}"
 
     # Discover test types from the runner test-source files
     # (test-source.<type>.runner.yaml → <type>).
@@ -98,7 +120,7 @@ for client in "${CLIENTS[@]}"; do
       run_timeout="$(get_run_timeout "$client" "$test_type")"
       global_timeout=$(( BUILD_TIMEOUT + run_timeout ))
 
-      entries+=("- id: benchmarkoor-${client}-${CONTEXT}-${VERSION}-${name}-${test_type}-${instance_id}
+      entries+=("- id: benchmarkoor-${client}-${CONTEXT}-${subdir_slug}-${name}-${test_type}-${instance_id}
   name: \"(${client_display}) - ${context_display} - ${subdir} - ${test_type_display} - ${instance_id}\"
   owner: ethpandaops
   repo: benchmarkoor-tests
@@ -121,16 +143,17 @@ for client in "${CLIENTS[@]}"; do
     timeouts: '{\"build\": ${BUILD_TIMEOUT}, \"run\": ${run_timeout}, \"global\": ${global_timeout}}'")
     done
     done
-  done < <(find "${V1_DIR}" -mindepth 1 -maxdepth 1 -type d | sort)
+  done < <(find "${family_dir}" -mindepth 1 -maxdepth 1 -type d | sort)
 
   {
     echo "# AUTO-GENERATED FILE - DO NOT EDIT MANUALLY"
     echo "# Regenerate with: make config (or ./dispatchoor/generate.sh)"
-    echo "# Source: configs/contexts/repricing/v1/<subdir>/"
+    echo "# Source: configs/contexts/${CONTEXT}/${subdir_prefix}/<subdir>/"
     for entry in "${entries[@]}"; do
       echo ""
       echo "$entry"
     done
   } > "${outfile}"
   echo "Generated ${outfile} (${#entries[@]} entries)"
+done
 done
