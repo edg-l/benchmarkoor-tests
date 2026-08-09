@@ -17,6 +17,7 @@ on:
         type: choice
         options:
           - "state-actor/v1"
+          - "jochemnet/v1"
       context:
         description: "Test context"
         required: false
@@ -29,10 +30,13 @@ on:
         required: true
         type: choice
         options:
+          # State actor
           - "v1/bal-devnet-7"
           - "v1/glamsterdam-devnet-6"
           - "v1/glamsterdam-devnet-7"
           - "v1/glamsterdam-devnet-7-full"
+          # Jochemnet
+          - "jochemnet/v1/glamsterdam-devnet-7"
       test-type:
         description: "Test type to run"
         required: false
@@ -68,7 +72,15 @@ jobs:
     runs-on:
       group: gasbenchmark
       labels:
-        - benchmarkoor-v1-runner-${{ matrix.client }}
+        # The runner pool follows the subdir, because a run can only happen where
+        # its datadirs live: jochemnet subdirs need the jochemnet hosts, every
+        # other subdir stays on the v1 pool. Mirrors benchmarkoor-build.yaml.
+        - >-
+          ${{
+            contains(inputs.subdir, 'jochemnet')
+              && format('benchmarkoor-v1-jochemnet-runner-{0}', matrix.client)
+              || format('benchmarkoor-v1-runner-{0}', matrix.client)
+          }}
     # Whole-job cap; each phase also has its own step-level timeout below
     # (both read from the timeouts JSON input). Keep global >= build + run.
     timeout-minutes: ${{ fromJSON(inputs.timeouts).global }}
@@ -92,7 +104,12 @@ jobs:
           echo "builder_timeout=$(( ${{ fromJSON(inputs.timeouts).build }} - 30 ))m" >> "$GITHUB_OUTPUT"
           echo "runner_timeout=$(( ${{ fromJSON(inputs.timeouts).run }} - 30 ))m" >> "$GITHUB_OUTPUT"
 
+      # Only for snapshots state_actor synthesises. jochemnet is an existing
+      # network whose datadir is already on the host, so its datadirs
+      # builder.yaml declares no builders and this step fails outright with
+      # "no builders configured; nothing to build".
       - name: Build state-actor data directory
+        if: ${{ !contains(inputs.snapshot, 'jochemnet') }}
         timeout-minutes: ${{ fromJSON(inputs.timeouts).build }}
         uses: ethpandaops/benchmarkoor@master
         env:

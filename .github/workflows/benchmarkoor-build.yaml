@@ -23,6 +23,7 @@ on:
         type: choice
         options:
           - "state-actor/v1"
+          - "jochemnet/v1"
       context:
         description: "Test context"
         required: false
@@ -35,10 +36,13 @@ on:
         required: true
         type: choice
         options:
+          # State actor
           - "v1/bal-devnet-7"
           - "v1/glamsterdam-devnet-6"
           - "v1/glamsterdam-devnet-7"
           - "v1/glamsterdam-devnet-7-full"
+          # Jochemnet
+          - "jochemnet/v1/glamsterdam-devnet-7"
       test-type:
         description: "Test type to run"
         required: false
@@ -52,7 +56,7 @@ on:
         required: false
         default: "2160"
       image:
-        description: "Benchmarkoor docker image"
+        description: "Benchmarkoor docker image. Empty builds the image locally from git-ref (the action only honours git-ref when this is empty)."
         required: false
         default: "ghcr.io/ethpandaops/benchmarkoor:master"
       git-ref:
@@ -73,7 +77,15 @@ jobs:
     runs-on:
       group: gasbenchmark
       labels:
-        - benchmarkoor-v1-runner-${{ matrix.client }}
+        # The runner pool follows the subdir, because a build can only run where
+        # its snapshots live: jochemnet subdirs need the jochemnet hosts, every
+        # other subdir stays on the v1 pool.
+        - >-
+          ${{
+            contains(inputs.subdir, 'jochemnet')
+              && format('benchmarkoor-v1-jochemnet-runner-{0}', matrix.client)
+              || format('benchmarkoor-v1-runner-{0}', matrix.client)
+          }}
         # Pin each client's build to a specific host. Unlisted clients fall back
         # to their per-client label (harmless duplicate → no host pin).
         #- >-
@@ -125,5 +137,6 @@ jobs:
           build-args: >-
             --rebuild-on-diff
             --limit-state-actor-target=${{ matrix.client }}
+            --limit-pre-runs-target=${{ matrix.client }}
             --limit-eest-payload-target=${{ matrix.client }}
           build-config: ${{ inputs.build-config }}

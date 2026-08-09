@@ -1,0 +1,21 @@
+global:
+  env:
+    # Snapshot dirs
+    GETH_SNAPSHOT_DIR: /schelk/snapshots/geth/jochemnet/24402727
+    # The CHAIN COLUMN dir, not the block dir: nethermind boots with
+    # --Init.BaseDbPath=/data and reads the columns directly under it. The
+    # two are a pair — the shallower path boots at MAINNET GENESIS instead
+    # of erroring (runs 31275174347, 31275391539: 1 test, genesis hash),
+    # where this one loaded the chain and benchmarked (run 31274385336).
+    NETHERMIND_SNAPSHOT_DIR: /schelk/snapshots/nethermind/jochemnet/24402727/nethermind_db/mainnet
+    BESU_SNAPSHOT_DIR: /schelk/snapshots/besu/jochemnet/24402727
+    RETH_SNAPSHOT_DIR: /schelk/snapshots/reth/jochemnet/24402727
+    ERIGON_SNAPSHOT_DIR: /schelk/snapshots/erigon/jochemnet/24402727
+    ETHREX_SNAPSHOT_DIR: /schelk/snapshots/ethrex/jochemnet/24402727
+    # Genesis files
+    GETH_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
+    NETHERMIND_CHAINSPEC: https://raw.githubusercontent.com/ethpandaops/perf-devnets/refs/heads/master/network-configs/devnet-3/metadata/chainspec.json
+    BESU_GENESIS: https://raw.githubusercontent.com/ethpandaops/perf-devnets/refs/heads/master/network-configs/devnet-3/metadata/besu.json
+    RETH_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
+    ETHREX_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
+    ERIGON_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json

@@ -1,0 +1,11 @@
+# Intentionally empty.
+#
+# benchmarkoor-build.yaml always fetches
+# configs/datadirs/${snapshot}/builder.yaml, so this file has to EXIST (a 404
+# fails the config download) — but jochemnet has nothing to say at the datadir
+# layer. Its pre_runs and eest_payloads blocks live together in
+# configs/contexts/repricing/jochemnet/v1/<subdir>/test-source.*.builder.yaml,
+# because the pre-run's fork schedule and the fill that follows it have to agree
+# on AMSTERDAM_ACTIVATION_TS and would drift if split across two files.
+#
+# The snapshot paths and genesis files it needs are in the sibling global.yaml.

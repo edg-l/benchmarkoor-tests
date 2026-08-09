@@ -182,18 +182,24 @@ jobs:
           mkdir meta
           tar -xzf "$ASSET" -C meta --wildcards \
             '*/state-actor-manifest.json' '*/.benchmarkoor-fill.json' \
-            '*/.benchmarkoor-build.json' '*/.benchmarkoor-pytest-report.json' 2>/dev/null || true
+            '*/.benchmarkoor-build.json' '*/.benchmarkoor-pytest-report.json' \
+            '*/pre-run.meta.json' 2>/dev/null || true
           SA=$(find meta -name state-actor-manifest.json | head -1)
           FILL=$(find meta -name .benchmarkoor-fill.json | head -1)
           BUILD=$(find meta -path '*eest-payloads*' -name .benchmarkoor-build.json | head -1)
           PYTEST=$(find meta -name .benchmarkoor-pytest-report.json | head -1)
+          # Present only when the pre_runs target set bundle_dir — the action
+          # archives the whole pre_run_bundle/ directory, this file included.
+          PRERUN=$(find meta -name pre-run.meta.json | head -1)
           jq -n --arg client "$CLIENT" \
             --slurpfile sa "${SA:-/dev/null}" --slurpfile fill "${FILL:-/dev/null}" \
             --slurpfile build "${BUILD:-/dev/null}" --slurpfile pytest "${PYTEST:-/dev/null}" \
+            --slurpfile prerun "${PRERUN:-/dev/null}" \
             '{client:$client,
               state_actor:($sa[0] // {}),
               eest_fill:($fill[0] // {}),
               build_inputs:(($build[0] // {}).inputs // {}),
+              pre_run:($prerun[0] // {}),
               pytest:(($pytest[0] // {}) | {summary, duration, exitcode, created})}' \
             > "${CLIENT}.meta.json"
 
@@ -298,6 +304,11 @@ jobs:
                 marker: .build_inputs.marker,
                 tests: .build_inputs.tests,
                 genesis_eips: (.build_inputs.genesis_eip_override.EIPs // .build_inputs.genesis_eip_override.eips),
+                prerun_payloads: .pre_run.payloads,
+                prerun_start_block: .pre_run.start_block_number,
+                prerun_start_hash: .pre_run.start_block_hash,
+                prerun_end_block: .pre_run.end_block_number,
+                prerun_end_hash: .pre_run.end_block_hash,
                 pytest_passed: .pytest.summary.passed,
                 pytest_total: .pytest.summary.total
               }' "$META_DIR/${client}.meta.json" 2>/dev/null || echo '{}')
@@ -336,6 +347,18 @@ jobs:
           hbytes() { [ -n "${1:-}" ] && [ "$1" != "null" ] && numfmt --to=iec --suffix=B "$1" 2>/dev/null || echo "—"; }
           val() { local v; v=$(jq -r "$2 // empty" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
           arr() { local v; v=$(jq -r "($2 // []) | map(tostring) | join(\", \")" <<<"$1"); [ -n "$v" ] && echo "$v" || echo "—"; }
+
+          # What an asset holds depends on which builder produced the snapshot:
+          # state_actor ships its manifest, pre_runs ships the replay bundle (and
+          # only when the target set a bundle_dir). Describe what is actually in
+          # there rather than naming a file that may not exist.
+          CONTENTS='`eest-payloads/<client>/…` fixtures'
+          if jq -e '[.assets[].build.state_root // empty] | length > 0' manifest.json >/dev/null 2>&1; then
+            CONTENTS="$CONTENTS, \`state-actor/<client>/state-actor-manifest.json\`"
+          fi
+          if jq -e '[.assets[].build.prerun_payloads // empty] | length > 0' manifest.json >/dev/null 2>&1; then
+            CONTENTS="$CONTENTS, \`pre-runs/<client>/pre_run_bundle/\`"
+          fi
           {
             echo "## EEST $TEST_TYPE payloads"
             echo
@@ -347,7 +370,7 @@ jobs:
             echo "| EEST commit | \`$EEST_SHA\` |"
             echo "| Promoted from build run | [\`$BUILD_RUN_ID\`](https://github.com/$REPO/actions/runs/$BUILD_RUN_ID) |"
             echo
-            echo "Each \`*.tar.gz\` contains \`eest-payloads/<client>/…\` fixtures and \`state-actor/<client>/state-actor-manifest.json\`."
+            echo "Each \`*.tar.gz\` contains $CONTENTS."
             echo "Assets over 2 GB are split into \`.part-NNN\` files — use \`download.sh\` (fetches, reassembles, verifies against \`SHA256SUMS\`), or see \`manifest.json\`."
             echo
             echo "## Build details"
@@ -357,22 +380,48 @@ jobs:
               echo
               echo "### $client"
               echo
-              echo "#### state-actor"
-              echo "| Field | Value |"
-              echo "|---|---|"
-              echo "| State root | \`$(val "$b" .state_root)\` |"
-              echo "| Accounts created | $(val "$b" .accounts_created) |"
-              echo "| Contracts created | $(val "$b" .contracts_created) |"
-              echo "| Storage slots | $(val "$b" .storage_slots) |"
-              echo "| DB size | $(hbytes "$(jq -r '.db_size_bytes // empty' <<<"$b")") |"
-              echo "| Chain ID | $(val "$b" .chain_id) |"
-              echo "| Block gas limit | $(val "$b" .gas_limit) |"
-              echo "| Seed | $(val "$b" .seed) |"
-              echo "| Target size | $(val "$b" .target_size) |"
-              echo "| Baseline fork | \`$(val "$b" .snapshot_baseline_fork)\` |"
-              echo "| state-actor version | \`$(val "$b" .state_actor_version)\` |"
-              echo "| Image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
-              echo
+              # Only snapshots built by the state_actor builder ship a
+              # state-actor-manifest.json. A pre_runs build (an existing chain
+              # advanced in place) has none, and every field below would render
+              # as "—", so skip the whole table rather than print an empty one.
+              if [ "$(jq -r '[.state_root, .accounts_created, .contracts_created, .storage_slots, .db_size_bytes, .chain_id, .gas_limit, .seed, .target_size, .snapshot_baseline_fork, .state_actor_version, .state_actor_image] | map(select(. != null)) | length' <<<"$b")" -gt 0 ]; then
+                echo "#### state-actor"
+                echo "| Field | Value |"
+                echo "|---|---|"
+                echo "| State root | \`$(val "$b" .state_root)\` |"
+                echo "| Accounts created | $(val "$b" .accounts_created) |"
+                echo "| Contracts created | $(val "$b" .contracts_created) |"
+                echo "| Storage slots | $(val "$b" .storage_slots) |"
+                echo "| DB size | $(hbytes "$(jq -r '.db_size_bytes // empty' <<<"$b")") |"
+                echo "| Chain ID | $(val "$b" .chain_id) |"
+                echo "| Block gas limit | $(val "$b" .gas_limit) |"
+                echo "| Seed | $(val "$b" .seed) |"
+                echo "| Target size | $(val "$b" .target_size) |"
+                echo "| Baseline fork | \`$(val "$b" .snapshot_baseline_fork)\` |"
+                echo "| state-actor version | \`$(val "$b" .state_actor_version)\` |"
+                echo "| Image | \`$(val "$b" .state_actor_image)\`$( d=$(jq -r '.state_actor_image_digest // empty' <<<"$b"); [ -n "$d" ] && echo " @ \`$d\`") |"
+                echo
+              fi
+              # A pre_runs build advances an existing chain instead of
+              # synthesising one; its bundle metadata is what describes the work,
+              # so it stands in for the state-actor table above. Absent unless
+              # the target set bundle_dir.
+              if [ "$(jq -r '.prerun_payloads // "null"' <<<"$b")" != "null" ]; then
+                ps=$(jq -r '.prerun_start_block' <<<"$b")
+                pe=$(jq -r '.prerun_end_block' <<<"$b")
+                pc=$(jq -r '.prerun_payloads' <<<"$b")
+                # Contiguous means every block in (start, end] has exactly one
+                # payload; a mismatch means the bundle has gaps or duplicates.
+                if [ "$pc" -eq "$((pe - ps))" ]; then contig="yes"; else contig="no — $pc payloads over $((pe - ps)) blocks"; fi
+                echo "#### pre-run"
+                echo "| Field | Value |"
+                echo "|---|---|"
+                echo "| Start block | $ps (\`$(val "$b" .prerun_start_hash)\`) |"
+                echo "| End block | $pe (\`$(val "$b" .prerun_end_hash)\`) |"
+                echo "| Payloads | $pc |"
+                echo "| Contiguous | $contig |"
+                echo
+              fi
               echo "#### eest tests / benchmarks"
               echo "| Field | Value |"
               echo "|---|---|"
