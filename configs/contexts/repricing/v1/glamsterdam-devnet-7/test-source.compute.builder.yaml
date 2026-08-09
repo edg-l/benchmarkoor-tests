@@ -1,10 +1,10 @@
 builder:
   eest_payloads:
     pull_policy: always
-    eest_repo: https://github.com/ethereum/execution-specs.git
+    eest_repo: https://github.com/jochem-brouwer/execution-specs.git
     # Frozen pre-devnet-8 snapshot of forks/amsterdam (forks/amsterdam now
     # merges devnet-8 spec PRs and is no longer usable for benchmark fills).
-    eest_ref: benchmarks/amsterdam
+    eest_ref: bench-stateful-filler-optimizations
     config:
       fork: amsterdam
       # Hardhat/Anvil dev key #0 → 0xf39Fd6…2266 (the pre-funded seed above).
