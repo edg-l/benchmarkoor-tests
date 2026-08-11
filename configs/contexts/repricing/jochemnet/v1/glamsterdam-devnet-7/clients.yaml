@@ -11,7 +11,7 @@ runner:
         labels:
           bal-mode: full
       #image: ethpandaops/geth:glamsterdam-devnet-7
-      image: ethpandaops/geth:jochem-brouwer-blobpool-init-race-fix
+      image: ghcr.io/jochem-brouwer/go-ethereum:glamsterdam-devnet-7-blobpool-fix
       extra_args:
         - --engine.maxreorgdepth=1024
         - --override.amsterdam=${AMSTERDAM_ACTIVATION_TS}
