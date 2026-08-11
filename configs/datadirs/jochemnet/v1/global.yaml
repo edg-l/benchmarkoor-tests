@@ -14,7 +14,7 @@ global:
     ETHREX_SNAPSHOT_DIR: /schelk/snapshots/ethrex/jochemnet/24402727
     # Genesis files
     GETH_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
-    NETHERMIND_CHAINSPEC: https://raw.githubusercontent.com/ethpandaops/perf-devnets/refs/heads/master/network-configs/devnet-3/metadata/chainspec.json
+    NETHERMIND_CHAINSPEC: https://gist.githubusercontent.com/skylenet/92628a41f44eb3e4af7149448ce35850/raw/d902440b04dce3845a07048b224f81e132a53890/nethermind-jochemnet-with-osaka.json
     BESU_GENESIS: https://raw.githubusercontent.com/ethpandaops/perf-devnets/refs/heads/master/network-configs/devnet-3/metadata/besu.json
     RETH_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
     ETHREX_GENESIS: https://gist.githubusercontent.com/jochem-brouwer/9cc7e180fbef1c7c388c0a12f7fd778c/raw/3f10decdd1b0cc0604d21901944ffa08bfe94581/gistfile1.json
