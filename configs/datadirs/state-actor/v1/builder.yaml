@@ -2,12 +2,12 @@ builder:
   ## Stage 1: Building the large repricing datadir using state-actor
   state_actor:
     images: # TODO: We should probably pin the sha256 or a verision of the state-actor images
-      geth: ghcr.io/ethereum/state-actor:main
-      nethermind: ghcr.io/ethereum/state-actor-nethermind:main
-      ethrex: ghcr.io/ethereum/state-actor-ethrex:main
-      reth: ghcr.io/ethereum/state-actor-reth:main
-      besu: ghcr.io/ethereum/state-actor-besu:main
-      erigon: ghcr.io/ethereum/state-actor-erigon:pr-118
+      geth: ghcr.io/ethereum/state-actor:main-879ac64
+      nethermind: ghcr.io/ethereum/state-actor-nethermind:main-879ac64
+      ethrex: ghcr.io/ethereum/state-actor-ethrex:main-879ac64
+      reth: ghcr.io/ethereum/state-actor-reth:main-879ac64
+      besu: ghcr.io/ethereum/state-actor-besu:main-879ac64
+      erigon: ghcr.io/ethereum/state-actor-erigon:main-879ac64
     pull_policy: always
     config:
       seed: 42
