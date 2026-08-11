@@ -10,7 +10,8 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/geth:glamsterdam-devnet-7
+      #image: ethpandaops/geth:glamsterdam-devnet-7
+      image: ethpandaops/geth:jochem-brouwer-blobpool-init-race-fix
       extra_args:
         - --engine.maxreorgdepth=1024
         - --override.amsterdam=1
