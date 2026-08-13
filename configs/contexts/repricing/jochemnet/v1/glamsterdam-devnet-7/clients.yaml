@@ -82,7 +82,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/reth:glamsterdam-devnet-7
+      image: ethpandaops/reth:glamsterdam-devnet-7-acf6e17
       genesis_fork_override:
         amsterdam: ${AMSTERDAM_ACTIVATION_TS}
       extra_args:
@@ -126,7 +126,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/erigon:glamsterdam-devnet-7
+      image: ethpandaops/erigon:glamsterdam-devnet-7-fceab5f
       extra_args:
         - --override.amsterdam=${AMSTERDAM_ACTIVATION_TS}
         - --fcu.background.commit=false
@@ -156,7 +156,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/ethrex:glamsterdam-devnet-7
+      image: ethpandaops/ethrex:glamsterdam-devnet-7-3f6569f
       genesis_fork_override:
         amsterdam: ${AMSTERDAM_ACTIVATION_TS}
       extra_args:

@@ -10,7 +10,8 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/geth:glamsterdam-devnet-7
+      #image: ethpandaops/geth:glamsterdam-devnet-7
+      image: ghcr.io/jochem-brouwer/go-ethereum:glamsterdam-devnet-7-blobpool-fix
       extra_args:
         - --engine.maxreorgdepth=1024
         - --override.amsterdam=1
@@ -79,7 +80,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/reth:glamsterdam-devnet-7
+      image: ethpandaops/reth:glamsterdam-devnet-7-acf6e17
       genesis_fork_override: { amsterdam: 1 }
       extra_args:
         - --engine.slow-block-threshold=0
@@ -94,7 +95,8 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image:  nethermindeth/nethermind:master
+      #image:  nethermindeth/nethermind:master
+      image: ethpandaops/nethermind:qu0b-qu0b-flatdb-persist-on-shutdown
       genesis_eip_override: { timestamp: 1, eips: [2780, 7708, 7778, 7843, 7928, 7954, 7976, 7981, 7997, 8024, 8037, 8038, 8246, 8282] }
       extra_args:
         - --Init.BaseDbPath=/data
@@ -119,7 +121,7 @@ runner:
       metadata:
         labels:
           bal-mode: full
-      image: ethpandaops/erigon:glamsterdam-devnet-7
+      image: ethpandaops/erigon:glamsterdam-devnet-7-fceab5f
       extra_args:
         - --override.amsterdam=1
         - --fcu.background.commit=false
